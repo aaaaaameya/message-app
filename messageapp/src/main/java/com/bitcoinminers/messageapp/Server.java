@@ -39,12 +39,34 @@ public class Server implements Saveable {
         throw new NoSuchElementException(String.format("No user with ID %d.", userId));
     }
 
+    public Chat getChat(int chatId) {
+        for (Chat i : chats) {
+            if (i.getId() == chatId) {
+                return i;
+            }
+        }
+
+        throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
+    }
+
     public boolean checkAdmin(int userId) {
         return getUser(userId).getAdminStatus();
     }
 
     public void toggleAdmin(int userId) {
         getUser(userId).toggleAdminStatus();
+    }
+
+    public void addUserToChat(int userId, int chatId) {
+        User user = getUser(userId);
+        Chat chat = getChat(chatId);
+        chat.addUser(user);
+    }
+
+    public void removeUserFromChat(int userId, int chatId) {
+        User user = getUser(userId);
+        Chat chat = getChat(chatId);
+        chat.removeUser(user);
     }
 
     /**

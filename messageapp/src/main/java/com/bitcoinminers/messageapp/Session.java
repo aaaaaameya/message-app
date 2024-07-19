@@ -86,6 +86,8 @@ public class Session {
         System.out.println("| l  / log X:          view chat log of chat with ID X");
         System.out.println("| ia / is-admin X:     get admin status for user of id X");
         System.out.println("| ta / toggle-admin X: toggle admin status for user of id X");
+        System.out.println("| au / add-user X C:   add user of id X to chat with id C");
+        System.out.println("| ru / remove-user X C: remove user of id X from chat with id C");
     }
 
     public void quitCommand() {
@@ -109,6 +111,7 @@ public class Session {
     }
 
     public void switchViewCommand(int userId) {
+        // Need error checking here?
         currUserId = Optional.of(userId);
     }
 
@@ -131,6 +134,14 @@ public class Session {
 
     public void toggleAdminCommand(int userId) {
         server.toggleAdmin(userId);
+    }
+
+    public void addUserToChat(int userId, int chatId) {
+        server.addUserToChat(userId, chatId);
+    }
+
+    public void removeUserFromChat(int userId, int chatId) {
+        server.removeUserFromChat(userId, chatId);
     }
 
     public static void main(String[] args) {
