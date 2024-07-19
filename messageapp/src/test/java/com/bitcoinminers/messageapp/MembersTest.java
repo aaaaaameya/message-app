@@ -14,7 +14,8 @@ public class MembersTest
     {
         Server server = new Server();
         Session session = new Session(server);
+        assertTrue( true );
 
-        
+
     }
 }
