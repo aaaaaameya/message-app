@@ -79,6 +79,7 @@ public class Session {
                 case "ta":  case "toggle-admin": toggleAdminCommand(Integer.parseInt(commands[1])); break;
                 case "au":  case "add-user": addUserToChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "ru":  case "remove-user": removeUserFromChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "bg":  case "be-god": enterGodModeCommand(commands[1]); break;
                 // TODO Implement a save command
             }
         } catch (Exception e) {
