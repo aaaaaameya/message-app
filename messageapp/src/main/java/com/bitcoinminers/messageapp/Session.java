@@ -63,8 +63,10 @@ public class Session {
                 case "nu":  case "new-user": newUserCommand(commands[1]); break;
                 case "nc":  case "new-chat": newChatCommand(commands[1]); break;
                 case "v":   case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
-                case "m":   case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length)));
-                case "l":   case "log" :     logCommand(Integer.parseInt(commands[1]));
+                case "m":   case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
+                case "l":   case "log" :     logCommand(Integer.parseInt(commands[1])); break;
+                case "ia":  case "is-admin": isAdminCommand(Integer.parseInt(commands[1])); break;
+                case "ta":  case "toggle-admin": toggleAdminCommand(Integer.parseInt(commands[1])); break;
                 // TODO Implement a save command
             }
         } catch (Exception e) {
@@ -73,15 +75,17 @@ public class Session {
     }
 
     public void helpCommand() {
-        System.out.println("| h  / help:         show commands");
-        System.out.println("| q  / quit:         quit the current session (will not save)");
-        System.out.println("| u  / users:        show all user ids and names");
-        System.out.println("| c  / chats:        show all chat ids and names");
-        System.out.println("| nu / new-user N:   create a new user with name N");
-        System.out.println("| nc / new-chat N:   create a new chat with name N");
-        System.out.println("| v  / view X:       switch to user view of id X");
-        System.out.println("| m  / message X M:  send message M to chat with id X");
-        System.out.println("| l  / log X:        view chat log of chat with ID X");
+        System.out.println("| h  / help:            show commands");
+        System.out.println("| q  / quit:           quit the current session (will not save)");
+        System.out.println("| u  / users:          show all user ids and names");
+        System.out.println("| c  / chats:          show all chat ids and names");
+        System.out.println("| nu / new-user N:     create a new user with name N");
+        System.out.println("| nc / new-chat N:     create a new chat with name N");
+        System.out.println("| v  / view X:         switch to user view of id X");
+        System.out.println("| m  / message X M:    send message M to chat with id X");
+        System.out.println("| l  / log X:          view chat log of chat with ID X");
+        System.out.println("| ia / is-admin X:     get admin status for user of id X");
+        System.out.println("| ta / toggle-admin X: toggle admin status for user of id X");
     }
 
     public void quitCommand() {
@@ -115,6 +119,18 @@ public class Session {
     public void logCommand(int chatId) {
         // TODO Route feedback of server message log fetch to user
         // for processing (will later include message decryption)
+    }
+
+    public void isAdminCommand(int userId) {
+        if (server.checkAdmin(userId)) {
+            System.out.printf("| User %d is admin\n", userId);
+        } else {
+            System.out.printf("| User %d is not admin\n", userId);
+        }
+    }
+
+    public void toggleAdminCommand(int userId) {
+        server.toggleAdmin(userId);
     }
 
     public static void main(String[] args) {

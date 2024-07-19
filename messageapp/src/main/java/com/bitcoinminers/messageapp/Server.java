@@ -29,6 +29,24 @@ public class Server implements Saveable {
         return users;
     }
 
+    public User getUser(int userId) {
+        for (User i : users) {
+            if (i.getId() == userId) {
+                return i;
+            }
+        }
+
+        throw new NoSuchElementException(String.format("No user with ID %d.", userId));
+    }
+
+    public boolean checkAdmin(int userId) {
+        return getUser(userId).getAdminStatus();
+    }
+
+    public void toggleAdmin(int userId) {
+        getUser(userId).toggleAdminStatus();
+    }
+
     /**
      * Get the next unused unique ID and increment the underlying ID.
      * @return Unused unique ID.
