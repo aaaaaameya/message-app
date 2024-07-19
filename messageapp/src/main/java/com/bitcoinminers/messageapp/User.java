@@ -18,6 +18,11 @@ public class User implements Saveable {
      */
     private String name;
 
+    /*
+     * Admin status of user.
+     */
+    private boolean isAdmin = false;
+
     public User(int id, String name) {
         this.id = id;
         this.name = name;
@@ -29,6 +34,14 @@ public class User implements Saveable {
 
     public String getName() {
         return name;
+    }
+
+    public boolean getAdminStatus() {
+        return isAdmin;
+    }
+
+    public void toggleAdminStatus() {
+        this.isAdmin = (isAdmin) ? false : true;
     }
 
     @Override
