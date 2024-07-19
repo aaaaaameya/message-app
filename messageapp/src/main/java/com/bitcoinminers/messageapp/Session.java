@@ -16,6 +16,12 @@ public class Session {
     boolean active = true;
 
     /**
+     * God view status
+     */
+    private boolean godView = true;
+    private String godPassword = "bitcoin";
+
+    /**
      * ID of the current user view.
      */
     private Optional<Integer> currUserId = Optional.empty();
@@ -42,6 +48,10 @@ public class Session {
     }
 
     private String getCurrUserName() throws NoSuchElementException {
+        if (this.godView) {
+            return "god";
+        }
+
         for (User user : server.getUsers()) {
             if (user.getId() == getCurrUserId()) {
                 return user.getName();
@@ -67,6 +77,8 @@ public class Session {
                 case "l":   case "log" :     logCommand(Integer.parseInt(commands[1])); break;
                 case "ia":  case "is-admin": isAdminCommand(Integer.parseInt(commands[1])); break;
                 case "ta":  case "toggle-admin": toggleAdminCommand(Integer.parseInt(commands[1])); break;
+                case "au":  case "add-user": addUserToChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "ru":  case "remove-user": removeUserFromChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 // TODO Implement a save command
             }
         } catch (Exception e) {
@@ -88,6 +100,7 @@ public class Session {
         System.out.println("| ta / toggle-admin X: toggle admin status for user of id X");
         System.out.println("| au / add-user X C:   add user of id X to chat with id C");
         System.out.println("| ru / remove-user X C: remove user of id X from chat with id C");
+        System.out.println("| bg / be-god P:       enter god mode, requires password P");
     }
 
     public void quitCommand() {
@@ -111,6 +124,8 @@ public class Session {
     }
 
     public void switchViewCommand(int userId) {
+        // disable god view here?
+
         // Need error checking here?
         currUserId = Optional.of(userId);
     }
@@ -133,15 +148,35 @@ public class Session {
     }
 
     public void toggleAdminCommand(int userId) {
-        server.toggleAdmin(userId);
+        if (this.godView || server.checkAdmin(currUserId.get())) {
+            server.toggleAdmin(userId);
+        } else {
+            System.out.println("You are not admin");
+        }
     }
 
-    public void addUserToChat(int userId, int chatId) {
-        server.addUserToChat(userId, chatId);
+    public void addUserToChatCommand(int userId, int chatId) {
+        if (this.godView || server.checkAdmin(currUserId.get())) {
+            server.addUserToChat(userId, chatId);
+        } else {
+            System.out.println("You are not admin");
+        }
     }
 
-    public void removeUserFromChat(int userId, int chatId) {
-        server.removeUserFromChat(userId, chatId);
+    public void removeUserFromChatCommand(int userId, int chatId) {
+        if (this.godView || server.checkAdmin(currUserId.get())) {
+            server.removeUserFromChat(userId, chatId);
+        } else {
+            System.out.println("You are not admin");
+        }
+    }
+
+    public void enterGodModeCommand(String password) {
+        if (password.equals(godPassword)) {
+            this.godView = true;
+        } else {
+            System.out.println("You are not god");
+        }
     }
 
     public static void main(String[] args) {
