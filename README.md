@@ -22,10 +22,13 @@ Commands are given to navigate from user device to user device and execute comma
 
 Outcome|Command
 -|-
+Show all commands.|`h(help)`
+Quit session.|`q(quit)`
 Show all user IDs and names.|`u(user)`
 Show all chat IDs and names.|`c(chats)`
 Create new user device with name `N`.|`nu(new-user) N`
 Switch to user device with ID `X`.|`v(view) X`
+Save the current system state.|`s(save)`
 
 ## User Devices
 

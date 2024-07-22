@@ -5,8 +5,11 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Scanner;
 
+import com.bitcoinminers.messageapp.exceptions.UnimplementedCommandException;
+import com.bitcoinminers.messageapp.exceptions.UnknownCommandException;
+
 /**
- * Class to simulate a user session. This is the interface with the server.
+ * Class to simulate a sudo session.
  * @author Christian Albina
  */
 public class Session {
@@ -56,32 +59,45 @@ public class Session {
 
         try {
             switch (commands[0]) {
-                case "h":   case "help":     helpCommand(); break;
-                case "q":   case "quit":     quitCommand(); break;
-                case "u":   case "users":    usersCommand(); break;
-                case "c":   case "chats":    chatsCommand(); break;
-                case "nu":  case "new-user": newUserCommand(commands[1]); break;
-                case "nc":  case "new-chat": newChatCommand(commands[1]); break;
-                case "v":   case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
-                case "m":   case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length)));
-                case "l":   case "log" :     logCommand(Integer.parseInt(commands[1]));
-                // TODO Implement a save command
+                case "h":  case "help":     helpCommand(); break;
+                case "q":  case "quit":     quitCommand(); break;
+                case "u":  case "users":    usersCommand(); break;
+                case "c":  case "chats":    chatsCommand(); break;
+                case "nu": case "new-user": newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
+                case "v":  case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
+                case "m":  case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
+                case "l":  case "log" :     logCommand(Integer.parseInt(commands[1])); break;
+                case "nc": case "new-chat": newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
+                case "d":  case "delete":   deleteCommand(Integer.parseInt(commands[1])); break;
+                case "a":  case "add":      addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "r":  case "remove":   removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "s":  case "save":     saveCommand(); break;
+                default: throw new UnknownCommandException(commands[0]);
             }
-        } catch (Exception e) {
-            System.out.printf("An error occured: \"%s\"\n", e.getMessage());
+        } catch (Exception exception) {
+            System.out.printf("An error occured: \"%s\"\n", exception.getMessage());
         }
     }
 
     public void helpCommand() {
-        System.out.println("| h  / help:         show commands");
-        System.out.println("| q  / quit:         quit the current session (will not save)");
-        System.out.println("| u  / users:        show all user ids and names");
-        System.out.println("| c  / chats:        show all chat ids and names");
-        System.out.println("| nu / new-user N:   create a new user with name N");
-        System.out.println("| nc / new-chat N:   create a new chat with name N");
-        System.out.println("| v  / view X:       switch to user view of id X");
-        System.out.println("| m  / message X M:  send message M to chat with id X");
-        System.out.println("| l  / log X:        view chat log of chat with ID X");
+        System.out.println("misc:");
+        System.out.println("  h(help):          Show all commands.");
+        System.out.println("  q(quit):          Quit session.");
+        System.out.println();
+        System.out.println("sudo commands:");
+        System.out.println("  u(user):          Show all user IDs and names.");
+        System.out.println("  c(chats):         Show all chat IDs and names.");
+        System.out.println("  nu(new-user) N:   Create new user device with name N.");
+        System.out.println("  v(view) X:        Switch to user device with ID X.");
+        System.out.println("  s(save):          Save the current system state.");
+        System.out.println();
+        System.out.println("user commands");
+        System.out.println("  m(message) X M:   Try to send message M to chat with id X.");
+        System.out.println("  l(log) X:         Request the chat log of the group chat with ID X.");
+        System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
+        System.out.println("  d(delete) X:      Try to delete chat with ID X.");
+        System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
+        System.out.println("  r(remove) X1 X2:  Try to remove user with ID X1 from chat with ID X2.");
     }
 
     public void quitCommand() {
@@ -89,11 +105,11 @@ public class Session {
     }
 
     public void usersCommand() {
-        server.getUsers().forEach(user -> System.out.printf("| %d: %s\n", user.getId(), user.getName()));
+        server.getUsers().forEach(user -> System.out.printf("%d: %s\n", user.getId(), user.getName()));
     }
 
     public void chatsCommand() {
-        server.getChats().forEach(chat -> System.out.printf("| %d: %s\n", chat.getId(), chat.getName()));
+        server.getChats().forEach(chat -> System.out.printf("%d: %s\n", chat.getId(), chat.getName()));
     }
 
     public void newUserCommand(String name) {
@@ -113,8 +129,23 @@ public class Session {
     }
 
     public void logCommand(int chatId) {
-        // TODO Route feedback of server message log fetch to user
-        // for processing (will later include message decryption)
+        throw new UnimplementedCommandException("log command");
+    }
+
+    private void deleteCommand(int chatId) {
+        throw new UnimplementedCommandException("delete command");
+    }
+    
+    private void addCommand(int userId, int chatId) {
+        throw new UnimplementedCommandException("add command");
+    }
+    
+    private void removeCommand(int userId, int chatId) {
+        throw new UnimplementedCommandException("remove command");
+    }
+    
+    private void saveCommand() {
+        throw new UnimplementedCommandException("save command");
     }
 
     public static void main(String[] args) {
@@ -123,18 +154,22 @@ public class Session {
         Session session = new Session(new Server());
         Scanner sc = new Scanner(System.in);
 
-        System.out.println("Type \"help\" to see all commands.");
+        System.out.println("\nType \"help\" to see all commands.");
 
         while (session.isActive()) {
+            System.out.print(CommandLineColours.ANSI_GREEN);
+
             try {
                 System.out.print(session.getCurrUserId());
             } catch (NoSuchElementException e) {
                 System.out.print("?");
             }
 
-            System.out.print(": ");
+            System.out.print(CommandLineColours.ANSI_RESET + ": " + CommandLineColours.ANSI_BLUE);
+            final String command = sc.nextLine();
+            System.out.print(CommandLineColours.ANSI_RESET);
 
-            session.handleCommand(sc.nextLine());
+            session.handleCommand(command);
         }
 
         sc.close();
