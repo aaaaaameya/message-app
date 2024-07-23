@@ -27,7 +27,7 @@ public class Chat implements Saveable {
     /**
      * Users in the chat.
      */
-    private ArrayList<User> users = new ArrayList<>();
+    private ArrayList<Integer> users = new ArrayList<>();
 
     public Chat(int id, String name) {
         this.id = id;
@@ -50,12 +50,12 @@ public class Chat implements Saveable {
         messages.add(new Message(sender, contents));
     }
 
-    public void addUser(User user) {
-        users.add(user);
+    public void addUser(Integer userId) {
+        users.add(userId);
     }
     
-    public void removeUser(User user) {
-        users.remove(user);
+    public void removeUser(Integer userId) {
+        users.remove(userId);
     }
 
     @Override

@@ -58,15 +58,15 @@ public class Server implements Saveable {
     }
 
     public void addUserToChat(int userId, int chatId) {
-        User user = getUser(userId);
+        getUser(userId);
         Chat chat = getChat(chatId);
-        chat.addUser(user);
+        chat.addUser(userId);
     }
 
     public void removeUserFromChat(int userId, int chatId) {
-        User user = getUser(userId);
+        getUser(userId);
         Chat chat = getChat(chatId);
-        chat.removeUser(user);
+        chat.removeUser(userId);
     }
 
     /**
