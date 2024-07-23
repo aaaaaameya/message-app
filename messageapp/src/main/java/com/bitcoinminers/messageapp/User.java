@@ -41,7 +41,7 @@ public class User implements Saveable {
     }
 
     public void toggleAdminStatus() {
-        this.isAdmin = (isAdmin) ? false : true;
+        this.isAdmin = !this.isAdmin;
     }
 
     @Override

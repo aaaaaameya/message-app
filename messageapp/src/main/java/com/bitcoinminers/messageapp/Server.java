@@ -30,9 +30,9 @@ public class Server implements Saveable {
     }
 
     public User getUser(int userId) {
-        for (User i : users) {
-            if (i.getId() == userId) {
-                return i;
+        for (User user : users) {
+            if (user.getId() == userId) {
+                return user;
             }
         }
 
@@ -40,9 +40,9 @@ public class Server implements Saveable {
     }
 
     public Chat getChat(int chatId) {
-        for (Chat i : chats) {
-            if (i.getId() == chatId) {
-                return i;
+        for (Chat chat : chats) {
+            if (chat.getId() == chatId) {
+                return chat;
             }
         }
 
