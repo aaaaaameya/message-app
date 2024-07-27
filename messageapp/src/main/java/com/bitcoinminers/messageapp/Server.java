@@ -29,6 +29,13 @@ public class Server implements Saveable {
         return users;
     }
 
+    public boolean hasUser(int userId) {
+        for (User user : users) {
+            if (user.getId() == userId) return true;
+        }
+        return false;
+    }
+
     /**
      * Get the next unused unique ID and increment the underlying ID.
      * @return Unused unique ID.
@@ -37,18 +44,18 @@ public class Server implements Saveable {
         return nextId++;
     }
     
-    private Chat getChat(int chatId) {
+    private Chat getChat(int chatId) throws NoSuchElementException {
         for (Chat chat : chats) {
             if (chat.getId() == chatId) return chat;
         }
-        return null;
+        throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
     }
 
-    private User getUser(int userId) {
+    private User getUser(int userId) throws NoSuchElementException {
         for (User user : users) {
             if (user.getId() == userId) return user;
         }
-        return null;
+        throw new NoSuchElementException(String.format("No user with ID %d.", userId));
     }
 
 
@@ -59,12 +66,21 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with  ID
      * {@code chatId}.
      */
-    public ArrayList<Message> getMessages(int chatId) throws NoSuchElementException {
+    public ArrayList<Message> getMessages(int chatId, int currUserId) throws NoSuchElementException {
         Chat chat = getChat(chatId);
-        if (chat == null) {
-           throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
-        }
         return chat.getMessages();
+    }
+
+    /**
+     * Get the userIds of a particular chat.
+     * @param chatId ID of the chat.
+     * @return ID of users in the chat with ID {@code chatId}.
+     * @throws NoSuchElementException If there is no chat with ID
+     * {@code chatId}.
+     */
+    public ArrayList<Integer> getChatUsers(int chatId) throws NoSuchElementException {
+        Chat chat = getChat(chatId);
+        return chat.getUsers();
     }
 
     public void newUser(String name) {
@@ -75,13 +91,9 @@ public class Server implements Saveable {
         chats.add(new Chat(getNextId(), name));
     }
 
-
     public void addUserToChat(int userId, int chatId) throws NoSuchElementException {
         Chat chat = getChat(chatId);
         User user = getUser(userId);
-        if (chat == null || user == null) {
-            throw new NoSuchElementException(String.format("Chat or user doens't exist."));            
-        }
         chat.addUser(user);
     }
 

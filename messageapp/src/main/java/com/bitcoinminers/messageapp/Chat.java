@@ -47,6 +47,12 @@ public class Chat implements Saveable {
         return messages;
     }
 
+    public ArrayList<Integer> getUsers() {
+        ArrayList<Integer> res = new ArrayList<>();
+        for (User u : users) res.add(u.getId());
+        return res;
+    }
+
     public void addUser(User user) {
         if (!users.contains(user)) {
             users.add(user);

@@ -22,7 +22,7 @@ public class Session {
     /**
      * ID of the current user view.
      */
-    private Optional<Integer> currUserId = Optional.empty();
+    private int currUserId = -1;
 
     /**
      * Server this session is happening in.
@@ -42,12 +42,13 @@ public class Session {
      * @throws NoSuchElementException If no user is currently being used.
      */
     private int getCurrUserId() throws NoSuchElementException {
-        return currUserId.get();
+        // return currUserId.get();
+        return currUserId;
     }
 
     private String getCurrUserName() throws NoSuchElementException {
         for (User user : server.getUsers()) {
-            if (user.getId() == getCurrUserId()) {
+            if (user.getId() == currUserId) {
                 return user.getName();
             }
         }
@@ -67,7 +68,8 @@ public class Session {
                 case "nu": case "new-user": newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
                 case "v":  case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
                 case "m":  case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
-                case "l":  case "log" :     logCommand(Integer.parseInt(commands[1])); break;
+                case "lu":  case "log-u" :     logUsersCommand(Integer.parseInt(commands[1])); break;
+                case "lm":  case "log-m" :     logMessagesCommand(Integer.parseInt(commands[1])); break;
                 case "nc": case "new-chat": newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
                 case "d":  case "delete":   deleteCommand(Integer.parseInt(commands[1])); break;
                 case "a":  case "add":      addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
@@ -94,7 +96,8 @@ public class Session {
         System.out.println();
         System.out.println("user commands");
         System.out.println("  m(message) X M:   Try to send message M to chat with id X.");
-        System.out.println("  l(log) X:         Request the chat log of the group chat with ID X.");
+        System.out.println("  lu(log-u) X:      Request the chat log of the group chat with ID X.");
+        System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X.");
         System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
         System.out.println("  d(delete) X:      Try to delete chat with ID X.");
         System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
@@ -122,15 +125,21 @@ public class Session {
     }
 
     public void switchViewCommand(int userId) {
-        currUserId = Optional.of(userId);
+        // currUserId = Optional.of(userId);
+        if (server.hasUser(userId) || userId == -1) currUserId = userId;
     }
 
     public void messageCommand(int chatId, String contents) {
         server.postMessage(chatId, getCurrUserName(), contents);
     }
 
-    public void logCommand(int chatId) {
-        ArrayList<Message> messages = server.getMessages(chatId);
+    public void logUsersCommand(int chatId) {
+        ArrayList<Integer> userIds = server.getChatUsers(chatId);
+        System.out.printf("Users in chat %d: %s\n", chatId, userIds.toString());
+    }
+
+    public void logMessagesCommand(int chatId) {
+        ArrayList<Message> messages = server.getMessages(chatId, currUserId);
         for (Message m : messages) {
             System.out.print(m.toString());
         }
@@ -163,10 +172,16 @@ public class Session {
         while (session.isActive()) {
             System.out.print(CommandLineColours.ANSI_GREEN);
 
-            try {
+            // try {
+            //     System.out.print(session.getCurrUserId());
+            // } catch (NoSuchElementException e) {
+            //     System.out.print("?");
+            // }
+
+            if (session.getCurrUserId() == -1) {
+                System.out.print("SUDO");
+            } else {
                 System.out.print(session.getCurrUserId());
-            } catch (NoSuchElementException e) {
-                System.out.print("?");
             }
 
             System.out.print(CommandLineColours.ANSI_RESET + ": " + CommandLineColours.ANSI_BLUE);
