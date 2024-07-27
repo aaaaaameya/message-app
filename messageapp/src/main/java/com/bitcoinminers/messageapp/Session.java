@@ -1,5 +1,6 @@
 package com.bitcoinminers.messageapp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -129,7 +130,10 @@ public class Session {
     }
 
     public void logCommand(int chatId) {
-        throw new UnimplementedCommandException("log command");
+        ArrayList<Message> messages = server.getMessages(chatId);
+        for (Message m : messages) {
+            System.out.print(m.toString());
+        }
     }
 
     private void deleteCommand(int chatId) {
@@ -137,7 +141,7 @@ public class Session {
     }
     
     private void addCommand(int userId, int chatId) {
-        throw new UnimplementedCommandException("add command");
+        server.addUserToChat(userId, chatId);
     }
     
     private void removeCommand(int userId, int chatId) {

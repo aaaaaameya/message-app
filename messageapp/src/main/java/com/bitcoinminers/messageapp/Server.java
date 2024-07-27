@@ -36,6 +36,21 @@ public class Server implements Saveable {
     public int getNextId() {
         return nextId++;
     }
+    
+    private Chat getChat(int chatId) {
+        for (Chat chat : chats) {
+            if (chat.getId() == chatId) return chat;
+        }
+        return null;
+    }
+
+    private User getUser(int userId) {
+        for (User user : users) {
+            if (user.getId() == userId) return user;
+        }
+        return null;
+    }
+
 
     /**
      * Get the encrypted messages of a particular chat.
@@ -45,13 +60,11 @@ public class Server implements Saveable {
      * {@code chatId}.
      */
     public ArrayList<Message> getMessages(int chatId) throws NoSuchElementException {
-        for (Chat chat : chats) {
-            if (chat.getId() == chatId) {
-                return chat.getMessages();
-            }
+        Chat chat = getChat(chatId);
+        if (chat == null) {
+           throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
         }
-
-        throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
+        return chat.getMessages();
     }
 
     public void newUser(String name) {
@@ -60,6 +73,16 @@ public class Server implements Saveable {
 
     public void newChat(String name) {
         chats.add(new Chat(getNextId(), name));
+    }
+
+
+    public void addUserToChat(int userId, int chatId) throws NoSuchElementException {
+        Chat chat = getChat(chatId);
+        User user = getUser(userId);
+        if (chat == null || user == null) {
+            throw new NoSuchElementException(String.format("Chat or user doens't exist."));            
+        }
+        chat.addUser(user);
     }
 
     /**
