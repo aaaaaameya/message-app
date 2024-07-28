@@ -3,7 +3,6 @@ package com.bitcoinminers.messageapp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Scanner;
 
 import com.bitcoinminers.messageapp.exceptions.UnimplementedCommandException;
@@ -131,7 +130,13 @@ public class Session {
     }
 
     public void messageCommand(int chatId, String contents) {
-        server.postMessage(chatId, getCurrUserName(), contents);
+        if (server.getChatUsers(chatId).contains(currUserId)) {
+            User u = server.getUser(currUserId);
+            u.encryptMessage(chatId, contents, server);
+        } else {
+            System.out.printf("User %d not in chat %d\n", currUserId, chatId);
+        }
+        // server.postMessage(chatId, getCurrUserName(), contents);
     }
 
     public void logUsersCommand(int chatId) {
@@ -141,8 +146,18 @@ public class Session {
 
     public void logMessagesCommand(int chatId) {
         ArrayList<Message> messages = server.getMessages(chatId, currUserId);
-        for (Message m : messages) {
-            System.out.print(m.toString());
+        if (currUserId == -1) {
+            System.out.println("Server can only see encrypted messages:");
+            for (Message m : messages) {
+                System.out.print(m.toString());
+            }
+        }
+        if (server.getChatUsers(chatId).contains(currUserId)) {
+            User u = server.getUser(currUserId);
+            System.out.println("User decrypts messages:");
+            for (Message m : messages) {
+                System.out.print(u.decryptMessage(chatId, m).toString());
+            }
         }
     }
 
@@ -150,7 +165,7 @@ public class Session {
         throw new UnimplementedCommandException("delete command");
     }
     
-    private void addCommand(int userId, int chatId) {
+    private void addCommand(int userId, int chatId) throws NoSuchElementException {
         server.addUserToChat(userId, chatId);
     }
     
@@ -173,14 +188,8 @@ public class Session {
         while (session.isActive()) {
             System.out.print(CommandLineColours.ANSI_GREEN);
 
-            // try {
-            //     System.out.print(session.getCurrUserId());
-            // } catch (NoSuchElementException e) {
-            //     System.out.print("?");
-            // }
-
             if (session.getCurrUserId() == -1) {
-                System.out.print("SUDO");
+                System.out.print("SERVER");
             } else {
                 System.out.print(session.getCurrUserId());
             }
