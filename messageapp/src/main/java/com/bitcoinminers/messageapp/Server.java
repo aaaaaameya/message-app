@@ -29,35 +29,23 @@ public class Server implements Saveable {
         return users;
     }
 
-    public User getUser(int userId) {
+    public User getUser(int userId) throws NoSuchElementException {
         for (User user : users) {
-            if (user.getId() == userId) {
-                return user;
-            }
+            if (user.getId() == userId) return user;
         }
 
         throw new NoSuchElementException(String.format("No user with ID %d.", userId));
     }
 
-    public Chat getChat(int chatId) {
+    public Chat getChat(int chatId) throws NoSuchElementException {
         for (Chat chat : chats) {
-            if (chat.getId() == chatId) {
-                return chat;
-            }
+            if (chat.getId() == chatId) return chat;
         }
 
         throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
     }
 
-    public boolean checkAdmin(int userId) {
-        return getUser(userId).getAdminStatus();
-    }
-
-    public void toggleAdmin(int userId) {
-        getUser(userId).toggleAdminStatus();
-    }
-
-    public void addUserToChat(int userId, int chatId) {
+    public void addUserToChat(int userId, int chatId) throws NoSuchElementException {
         getUser(userId);
         Chat chat = getChat(chatId);
         chat.addUser(userId);
@@ -67,6 +55,14 @@ public class Server implements Saveable {
         getUser(userId);
         Chat chat = getChat(chatId);
         chat.removeUser(userId);
+
+    }
+
+    public boolean hasUser(int userId) {
+        for (User user : users) {
+            if (user.getId() == userId) return true;
+        }
+        return false;
     }
 
     /**
@@ -76,6 +72,7 @@ public class Server implements Saveable {
     public int getNextId() {
         return nextId++;
     }
+    
 
     /**
      * Get the encrypted messages of a particular chat.
@@ -84,14 +81,21 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with  ID
      * {@code chatId}.
      */
-    public ArrayList<Message> getMessages(int chatId) throws NoSuchElementException {
-        for (Chat chat : chats) {
-            if (chat.getId() == chatId) {
-                return chat.getMessages();
-            }
-        }
+    public ArrayList<Message> getMessages(int chatId, int currUserId) throws NoSuchElementException {
+        Chat chat = getChat(chatId);
+        return chat.getMessages();
+    }
 
-        throw new NoSuchElementException(String.format("No chat with ID %d.", chatId));
+    /**
+     * Get the userIds of a particular chat.
+     * @param chatId ID of the chat.
+     * @return ID of users in the chat with ID {@code chatId}.
+     * @throws NoSuchElementException If there is no chat with ID
+     * {@code chatId}.
+     */
+    public ArrayList<Integer> getChatUsers(int chatId) throws NoSuchElementException {
+        Chat chat = getChat(chatId);
+        return chat.getUsers();
     }
 
     public void newUser(String name) {

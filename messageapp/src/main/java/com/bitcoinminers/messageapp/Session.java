@@ -1,5 +1,6 @@
 package com.bitcoinminers.messageapp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -19,15 +20,9 @@ public class Session {
     boolean active = true;
 
     /**
-     * God view status
-     */
-    private boolean godView = true;
-    private String godPassword = "bitcoin";
-
-    /**
      * ID of the current user view.
      */
-    private Optional<Integer> currUserId = Optional.empty();
+    private int currUserId = -1;
 
     /**
      * Server this session is happening in.
@@ -47,16 +42,14 @@ public class Session {
      * @throws NoSuchElementException If no user is currently being used.
      */
     private int getCurrUserId() throws NoSuchElementException {
-        return currUserId.get();
+        // return currUserId.get();
+        return currUserId;
     }
 
     private String getCurrUserName() throws NoSuchElementException {
-        if (this.godView) {
-            return "god";
-        }
-
+ 
         for (User user : server.getUsers()) {
-            if (user.getId() == getCurrUserId()) {
+            if (user.getId() == currUserId) {
                 return user.getName();
             }
         }
@@ -76,17 +69,13 @@ public class Session {
                 case "nu": case "new-user": newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
                 case "v":  case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
                 case "m":  case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
-                case "l":  case "log" :     logCommand(Integer.parseInt(commands[1])); break;
+                case "lu":  case "log-u" :     logUsersCommand(Integer.parseInt(commands[1])); break;
+                case "lm":  case "log-m" :     logMessagesCommand(Integer.parseInt(commands[1])); break;
                 case "nc": case "new-chat": newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
                 case "d":  case "delete":   deleteCommand(Integer.parseInt(commands[1])); break;
                 case "a":  case "add":      addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "r":  case "remove":   removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "s":  case "save":     saveCommand(); break;
-                case "ia":  case "is-admin": isAdminCommand(Integer.parseInt(commands[1])); break;
-                case "ta":  case "toggle-admin": toggleAdminCommand(Integer.parseInt(commands[1])); break;
-                case "au":  case "add-user": addUserToChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
-                case "ru":  case "remove-user": removeUserFromChatCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
-                case "bg":  case "be-god": enterGodModeCommand(commands[1]); break;
                 default: throw new UnknownCommandException(commands[0]);
             }
         } catch (Exception exception) {
@@ -108,18 +97,12 @@ public class Session {
         System.out.println();
         System.out.println("user commands");
         System.out.println("  m(message) X M:   Try to send message M to chat with id X.");
-        System.out.println("  l(log) X:         Request the chat log of the group chat with ID X.");
+        System.out.println("  lu(log-u) X:      Request the chat log of the group chat with ID X.");
+        System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X.");
         System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
         System.out.println("  d(delete) X:      Try to delete chat with ID X.");
         System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
         System.out.println("  r(remove) X1 X2:  Try to remove user with ID X1 from chat with ID X2.");
-
-
-        System.out.println("| ia / is-admin X:     get admin status for user of id X");
-        System.out.println("| ta / toggle-admin X: toggle admin status for user of id X");
-        System.out.println("| au / add-user X C:   add user of id X to chat with id C");
-        System.out.println("| ru / remove-user X C: remove user of id X from chat with id C");
-        System.out.println("| bg / be-god P:       enter god mode, requires password P");
     }
 
     public void quitCommand() {
@@ -143,18 +126,24 @@ public class Session {
     }
 
     public void switchViewCommand(int userId) {
-        // disable god view here?
-
-        // Need error checking here?
-        currUserId = Optional.of(userId);
+        // currUserId = Optional.of(userId);
+        if (server.hasUser(userId) || userId == -1) currUserId = userId;
     }
 
     public void messageCommand(int chatId, String contents) {
         server.postMessage(chatId, getCurrUserName(), contents);
     }
 
-    public void logCommand(int chatId) {
-        throw new UnimplementedCommandException("log command");
+    public void logUsersCommand(int chatId) {
+        ArrayList<Integer> userIds = server.getChatUsers(chatId);
+        System.out.printf("Users in chat %d: %s\n", chatId, userIds.toString());
+    }
+
+    public void logMessagesCommand(int chatId) {
+        ArrayList<Message> messages = server.getMessages(chatId, currUserId);
+        for (Message m : messages) {
+            System.out.print(m.toString());
+        }
     }
 
     private void deleteCommand(int chatId) {
@@ -162,55 +151,15 @@ public class Session {
     }
     
     private void addCommand(int userId, int chatId) {
-        throw new UnimplementedCommandException("add command");
+        server.addUserToChat(userId, chatId);
     }
     
     private void removeCommand(int userId, int chatId) {
-        throw new UnimplementedCommandException("remove command");
+        server.removeUserFromChat(userId, chatId);
     }
     
     private void saveCommand() {
         throw new UnimplementedCommandException("save command");
-    }
-
-    public void isAdminCommand(int userId) {
-        if (server.checkAdmin(userId)) {
-            System.out.printf("| User %d is admin\n", userId);
-        } else {
-            System.out.printf("| User %d is not admin\n", userId);
-        }
-    }
-
-    public void toggleAdminCommand(int userId) {
-        if (this.godView || server.checkAdmin(currUserId.get())) {
-            server.toggleAdmin(userId);
-        } else {
-            System.out.println("You are not admin");
-        }
-    }
-
-    public void addUserToChatCommand(int userId, int chatId) {
-        if (this.godView || server.checkAdmin(currUserId.get())) {
-            server.addUserToChat(userId, chatId);
-        } else {
-            System.out.println("You are not admin");
-        }
-    }
-
-    public void removeUserFromChatCommand(int userId, int chatId) {
-        if (this.godView || server.checkAdmin(currUserId.get())) {
-            server.removeUserFromChat(userId, chatId);
-        } else {
-            System.out.println("You are not admin");
-        }
-    }
-
-    public void enterGodModeCommand(String password) {
-        if (password.equals(godPassword)) {
-            this.godView = true;
-        } else {
-            System.out.println("You are not god");
-        }
     }
 
     public static void main(String[] args) {
@@ -224,10 +173,16 @@ public class Session {
         while (session.isActive()) {
             System.out.print(CommandLineColours.ANSI_GREEN);
 
-            try {
+            // try {
+            //     System.out.print(session.getCurrUserId());
+            // } catch (NoSuchElementException e) {
+            //     System.out.print("?");
+            // }
+
+            if (session.getCurrUserId() == -1) {
+                System.out.print("SUDO");
+            } else {
                 System.out.print(session.getCurrUserId());
-            } catch (NoSuchElementException e) {
-                System.out.print("?");
             }
 
             System.out.print(CommandLineColours.ANSI_RESET + ": " + CommandLineColours.ANSI_BLUE);

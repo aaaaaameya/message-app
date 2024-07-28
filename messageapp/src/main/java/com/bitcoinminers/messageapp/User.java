@@ -1,5 +1,7 @@
 package com.bitcoinminers.messageapp;
 
+import java.util.ArrayList;
+
 import org.json.JSONObject;
 
 /**
@@ -18,10 +20,10 @@ public class User implements Saveable {
      */
     private String name;
 
-    /*
-     * Admin status of user.
+    /**
+     * Group chats user is in
      */
-    private boolean isAdmin = false;
+    private ArrayList<Integer> chats = new ArrayList<>();
 
     public User(int id, String name) {
         this.id = id;
@@ -36,12 +38,16 @@ public class User implements Saveable {
         return name;
     }
 
-    public boolean getAdminStatus() {
-        return isAdmin;
+    public void addChat(int chatId) {
+        chats.add(chatId);
     }
 
-    public void toggleAdminStatus() {
-        this.isAdmin = !this.isAdmin;
+    public void removeChat(int chatId) {
+        chats.remove(chatId);
+    }
+
+    public ArrayList<Integer> getChats() {
+        return this.chats;
     }
 
     @Override

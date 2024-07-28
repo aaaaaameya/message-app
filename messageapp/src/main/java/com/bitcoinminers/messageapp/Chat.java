@@ -9,6 +9,7 @@ import org.json.JSONObject;
  * @author Christian Albina
  */
 public class Chat implements Saveable {
+
     /**
      * Unique ID of this chat.
      */
@@ -29,6 +30,11 @@ public class Chat implements Saveable {
      */
     private ArrayList<Integer> users = new ArrayList<>();
 
+    /**
+     * Chat admins in the chat.
+     */
+    private ArrayList<Integer> admins = new ArrayList<>();
+
     public Chat(int id, String name) {
         this.id = id;
         this.name = name;
@@ -46,6 +52,10 @@ public class Chat implements Saveable {
         return messages;
     }
 
+    public ArrayList<Integer> getUsers() {
+        return users;
+    }
+
     public void addMessage(String sender, String contents) {
         messages.add(new Message(sender, contents));
     }
@@ -56,6 +66,21 @@ public class Chat implements Saveable {
     
     public void removeUser(Integer userId) {
         users.remove(userId);
+    }
+
+    public boolean getAdminStatus(Integer userId) {
+        for (int admin : admins) {
+            if (userId == admin) return true;
+        }
+        return false;
+    }
+
+    public void makeAdmin(Integer userId) {
+        admins.add(userId);
+    }
+
+    public void removeAdmin(Integer userId) {
+        admins.remove(userId);
     }
 
     @Override
