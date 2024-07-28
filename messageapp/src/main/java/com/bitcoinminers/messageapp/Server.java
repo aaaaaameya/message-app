@@ -3,6 +3,9 @@ package com.bitcoinminers.messageapp;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+
 import org.json.JSONObject;
 
 public class Server implements Saveable {
@@ -46,8 +49,17 @@ public class Server implements Saveable {
     }
 
     public void addUserToChat(int userId, int chatId) throws NoSuchElementException {
-        getUser(userId);
+        User user = getUser(userId);
         Chat chat = getChat(chatId);
+        ArrayList<Integer> existingUsers = chat.getUsers();
+        if (existingUsers.size() == 0) {
+            user.initialiseChat(chatId);
+        } else {
+            User existing = getUser(existingUsers.get(0));
+            // TODO: Implement Basic DH, then Basic Station-to-Station for anti MITM unless we wanna keep that as a vulnerability
+            SecretKey s = existing.shareKey(chatId);
+            user.addChat(chatId, s);
+        }
         chat.addUser(userId);
     }
 
@@ -107,6 +119,7 @@ public class Server implements Saveable {
     }
 
     /**
+     * ASSUMPTION:
      * 
      * @param chatId Potentially valid chat ID.
      * @param sender Name of the sender.
@@ -114,15 +127,9 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with id
      * {@code chatId}.
      */
-    public void postMessage(int chatId, String sender, String contents) throws NoSuchElementException {
-        for (Chat chat : chats) {
-            if (chat.getId() == chatId) {
-                chat.addMessage(sender, contents);
-                return;
-            }
-        }
-
-        throw new NoSuchElementException(String.format("No chat with id %d", chatId));
+    public void storeEncryptedMessage(int chatId, String sender, String encryptedContents, IvParameterSpec iv) throws NoSuchElementException {
+        Chat chat = getChat(chatId);
+        chat.addMessage(sender, encryptedContents, iv);
     }
 
     @Override

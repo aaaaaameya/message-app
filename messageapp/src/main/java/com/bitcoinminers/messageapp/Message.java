@@ -1,5 +1,7 @@
 package com.bitcoinminers.messageapp;
 
+import javax.crypto.spec.IvParameterSpec;
+
 import org.json.JSONObject;
 
 /**
@@ -17,14 +19,32 @@ public class Message implements Saveable {
      */
     private String contents;
 
-    public Message(String sender, String contents) {
+    /**
+     * IV for message
+     */
+    private IvParameterSpec iv;
+
+    public Message(String sender, String contents, IvParameterSpec iv) {
         this.sender = sender;
         this.contents = contents;
+        this.iv = iv;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public String getContents() {
+        return contents;
+    }
+
+    public IvParameterSpec getIv() {
+        return iv;
     }
 
     @Override
     public String toString() {
-        return String.format("%s: %s\n", sender, contents);
+        return String.format("%s (IV: %s): %s\n", sender, EncryptionHelpers.bytesToHexstring(iv.getIV()), contents);
     }
 
     @Override

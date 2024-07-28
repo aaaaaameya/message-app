@@ -2,6 +2,8 @@ package com.bitcoinminers.messageapp;
 
 import java.util.ArrayList;
 
+import javax.crypto.spec.IvParameterSpec;
+
 import org.json.JSONObject;
 
 /**
@@ -38,6 +40,7 @@ public class Chat implements Saveable {
     public Chat(int id, String name) {
         this.id = id;
         this.name = name;
+        System.out.printf("Chat %s created with id %d", name, id);
     }
 
     public int getId() {
@@ -56,8 +59,8 @@ public class Chat implements Saveable {
         return users;
     }
 
-    public void addMessage(String sender, String contents) {
-        messages.add(new Message(sender, contents));
+    public void addMessage(String sender, String contents, IvParameterSpec iv) {
+        messages.add(new Message(sender, contents, iv));
     }
 
     public void addUser(Integer userId) {
