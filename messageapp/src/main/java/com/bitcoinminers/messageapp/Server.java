@@ -3,7 +3,6 @@ package com.bitcoinminers.messageapp;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 import org.json.JSONObject;
@@ -52,15 +51,27 @@ public class Server implements Saveable {
         User user = getUser(userId);
         Chat chat = getChat(chatId);
         ArrayList<Integer> existingUsers = chat.getUsers();
-        if (existingUsers.size() == 0) {
-            user.initialiseChat(chatId);
-        } else {
-            User existing = getUser(existingUsers.get(0));
-            // TODO: Implement Basic DH, then Basic Station-to-Station for anti MITM unless we wanna keep that as a vulnerability
-            SecretKey s = existing.shareKey(chatId);
-            user.addChat(chatId, s);
+        if (existingUsers.contains(userId)) {
+            System.err.println("user already in chat");
+            return;
         }
+        if (existingUsers.size() != 0) {
+            // Perform DH to get shared secret.
+            User existing = getUser(existingUsers.get(0));
+            // TODO: Implement Basic Station-to-Station for anti MITM unless we wanna keep that as a vulnerability
+            System.out.printf("Adding user %d to chat %d\n", userId, chatId);
+            shareSecret(chatId, existing, user);
+        } else {
+            user.initialiseChat(chatId);
+        }
+        user.addChat(chatId);
         chat.addUser(userId);
+    }
+
+    private void shareSecret(int chatId, User sender, User receiver) {
+        byte[] senderPub = sender.initiateDH(chatId);
+        byte[] receiverPub = receiver.acceptDH(chatId, senderPub);
+        sender.completeDH(chatId, receiverPub);
     }
 
     public void removeUserFromChat(int userId, int chatId) {
@@ -127,9 +138,9 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with id
      * {@code chatId}.
      */
-    public void storeEncryptedMessage(int chatId, String sender, String encryptedContents, IvParameterSpec iv) throws NoSuchElementException {
+    public void storeEncryptedMessage(int chatId, Message m) throws NoSuchElementException {
         Chat chat = getChat(chatId);
-        chat.addMessage(sender, encryptedContents, iv);
+        chat.addMessage(m);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.bitcoinminers.messageapp;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -132,6 +133,7 @@ public class Session {
     public void messageCommand(int chatId, String contents) {
         if (server.getChatUsers(chatId).contains(currUserId)) {
             User u = server.getUser(currUserId);
+            u.pullMessages(chatId, server.getMessages(chatId, currUserId));
             u.encryptMessage(chatId, contents, server);
         } else {
             System.out.printf("User %d not in chat %d\n", currUserId, chatId);
@@ -154,9 +156,11 @@ public class Session {
         }
         if (server.getChatUsers(chatId).contains(currUserId)) {
             User u = server.getUser(currUserId);
-            System.out.println("User decrypts messages:");
-            for (Message m : messages) {
-                System.out.print(u.decryptMessage(chatId, m).toString());
+            u.pullMessages(chatId, messages);
+            System.out.println("User stores decrypted messages:");
+            ArrayList<Message> userStored = u.getMessages(chatId);
+            for (Message m : userStored) {
+                System.out.print(m.toString());
             }
         }
     }
