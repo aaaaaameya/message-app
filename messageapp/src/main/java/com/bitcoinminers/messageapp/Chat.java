@@ -40,7 +40,7 @@ public class Chat implements Saveable {
     public Chat(int id, String name) {
         this.id = id;
         this.name = name;
-        System.out.printf("Chat %s created with id %d", name, id);
+        System.out.printf("Chat %s created with id %d\n", name, id);
     }
 
     public int getId() {
@@ -59,8 +59,8 @@ public class Chat implements Saveable {
         return users;
     }
 
-    public void addMessage(String sender, String contents, IvParameterSpec iv) {
-        messages.add(new Message(sender, contents, iv));
+    public void addMessage(Message m) {
+        messages.add(m);
     }
 
     public void addUser(Integer userId) {

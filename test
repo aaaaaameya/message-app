@@ -1,0 +1,28 @@
+nc 0
+nu 1
+nu 2
+a 1 0
+a 2 0
+v 1
+m 0 this is chat 0
+m 0 2nd message from 1
+v 2
+m 0 i love this
+v -1
+lm 0
+v 1
+lm 0
+v 2
+lm 0
+nc 3
+nu 4
+a 2 3
+a 4 3
+v 4
+m 3 omg another chat this is crazy and the server can't read this
+v 2
+m 3 woah this is nice i'm going to try log this now
+lm 3
+v -1
+lm 3
+q
