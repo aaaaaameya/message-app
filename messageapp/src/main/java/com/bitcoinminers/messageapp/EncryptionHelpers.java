@@ -58,22 +58,20 @@ public class EncryptionHelpers {
         }
     }
     
-    public static String aesDecrypt(String ct, SecretKey s, IvParameterSpec iv) {
-        try {
-            System.err.println("Decrypting with:");
-            System.err.println(bytesToHexstring(s.getEncoded()));
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, s, iv);
-            byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
-            return new String(plaintext);
-        } catch (Exception e) {
-            //  should not reach here
-            System.err.println(e);
-            return ct;
-        }
+    public static String aesDecrypt(String ct, SecretKey s, IvParameterSpec iv) throws GeneralSecurityException {
+        System.err.println("Decrypting with:");
+        System.err.println(bytesToHexstring(s.getEncoded()));
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+        cipher.init(Cipher.DECRYPT_MODE, s, iv);
+        byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
+        return new String(plaintext);
     }
 
-    // Yoinked from oracle
+
+    /*
+     * Yoinked from oracle
+     * Example of using Diffie Hellman
+     */
     public static void main(String args[]) {
         try {
         /*
@@ -170,6 +168,7 @@ public class EncryptionHelpers {
             throw new Exception("Shared secrets differ");
         System.out.println("Shared secrets are the same");
 
+        // Haibing testing factories
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         char[] c = "lol".toCharArray();
         byte[] salt = {1};

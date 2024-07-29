@@ -5,6 +5,7 @@ import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
+import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -72,6 +73,9 @@ public class User implements Saveable {
         return this.chats;
     }
 
+    /*
+     * As the first member of the chat, generate a local DH KeyPair for the chat
+     */
     public void initialiseChat(int chatId) {
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
@@ -83,11 +87,18 @@ public class User implements Saveable {
         }
     }
 
+    /*
+     * Phase 1 of a DH Exchange, public parameters and public key is shared
+     */
+
     public byte[] initiateDH(int chatId) {
         return DHKeys.get(chatId).getPublic().getEncoded();
     }
 
-
+    /*
+     * Phase 2 of a DH Exchange performed by the receiver
+     * Receives public params, calculates secret and returns its own public key
+     */
     public byte[] acceptDH(int chatId, byte[] encodedPubKey) {
         try {
             PublicKey incomingPubKey = EncryptionHelpers.decodePublicKey(encodedPubKey);
@@ -110,6 +121,10 @@ public class User implements Saveable {
         }
     }
     
+    /*
+     * Stage 3 of DH Exchange, performed by the sender
+     * Receives public key from sender, calculates secret
+     */
     public void completeDH(int chatId, byte[] encodedPubKey) {
         try {
             PublicKey incomingPubKey = EncryptionHelpers.decodePublicKey(encodedPubKey);
@@ -129,9 +144,20 @@ public class User implements Saveable {
         return chatLogs.get(chatId);
     }
 
+    /*
+     * Fetch all existing messages from the server (encrypted)
+     * Updates own storage to store decrypted messages locally
+     * 
+     * This is done prior to viewing logs or sending messages to ensure
+     * ratchet is up to date.
+     */
     public void pullMessages(int chatId, ArrayList<Message> messages) {
-        for (int i = chatLogs.get(chatId).size(); i < messages.size(); i++) {
-            chatLogs.get(chatId).add(decryptMessage(chatId, messages.get(i)));
+        try {
+            for (int i = chatLogs.get(chatId).size(); i < messages.size(); i++) {
+                chatLogs.get(chatId).add(decryptMessage(chatId, messages.get(i)));
+            }
+        } catch (GeneralSecurityException e) {
+            System.err.println("Failed to decrypt messages");
         }
     }
 
@@ -143,7 +169,7 @@ public class User implements Saveable {
         chatLogs.get(chatId).add(new Message(name, rawMessage, iv));
     }
 
-    public Message decryptMessage(int chatId, Message m) {
+    public Message decryptMessage(int chatId, Message m) throws GeneralSecurityException {
         String pt = EncryptionHelpers.aesDecrypt(m.getContents(), ratchets.get(chatId).nextReceive(), m.getIv());
         return new Message(m.getSender(), pt, m.getIv());
     }

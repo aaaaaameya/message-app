@@ -8,6 +8,11 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/*
+ * Uses SHA256 and PBKDF2 to implement a Ratchet for AES Keys
+ * There is a factory for receive and one for send
+ * Initialised when a user is added to a chat, and called to get a new key for each message
+ */
 public class Ratchet {
     private byte[] salt = {1};
 
@@ -17,6 +22,9 @@ public class Ratchet {
     private SecretKeyFactory sendRatchet = null;
     private SecretKeyFactory receiveRatchet = null;
     
+    /*
+     * A bit scuffed but split the secret into two halves to initialise the hash functions
+     */
     public Ratchet(byte[] secret, boolean isSender) {
         try {
             sendDigest = MessageDigest.getInstance("SHA-256");
@@ -46,7 +54,9 @@ public class Ratchet {
         }
     }
 
-
+    /*
+     * Get next key for sending
+     */
     public SecretKey nextSend() {
         try {
             char[] prev = new String(sendDigest.digest()).toCharArray();
@@ -60,6 +70,9 @@ public class Ratchet {
         }
     }
     
+    /*
+     * Get next key for receiving
+     */
     public SecretKey nextReceive() {
         try {
             char[] prev = new String(receiveDigest.digest()).toCharArray();
