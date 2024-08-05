@@ -1,7 +1,13 @@
 package com.bitcoinminers.messageapp.MLS;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -9,77 +15,33 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class RatchetTree {
+    private ArrayList<KeyPair> tree = new ArrayList<>();
+    private HashMap<Integer, Integer> userNodes = new HashMap<>();
+    private TreeSet<Integer> isFree = new TreeSet();
+
     private byte[] salt = {1};
 
-    private MessageDigest sendDigest = null;
-    private MessageDigest receiveDigest = null;
+    public RatchetTree(ArrayList<Integer> users) {
+        int size = 1;
+        while (size < 2 * users.size()) size*=2;
+        tree.ensureCapacity(size);
+        for (int i = 0; i < users.size(); i++) {
 
-    private SecretKeyFactory sendRatchet = null;
-    private SecretKeyFactory receiveRatchet = null;
-    
-    /*
-     * A bit scuffed but split the secret into two halves to initialise the hash functions
-     */
-    public RatchetTree(byte[] secret, boolean isSender) {
-        try {
-            sendDigest = MessageDigest.getInstance("SHA-256");
-            receiveDigest = MessageDigest.getInstance("SHA-256");
-            sendRatchet = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            receiveRatchet = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            
-            int length = secret.length;
-            byte[] b1 = new byte[length / 2];
-            byte[] b2 = new byte[length / 2];
-            for (int i = 0; i < length/2; i++) {
-                b1[i] = secret[i];
-            }
-            for (int i = 0; i < length/2; i++) {
-                b2[i] = secret[i + length/2];
-            }
-            
-            if (isSender) {
-                sendDigest.update(b1);
-                receiveDigest.update(b2);
-            } else {
-                sendDigest.update(b2);
-                receiveDigest.update(b1);
-            }
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-    }
-
-    /*
-     * Get next key for sending
-     */
-    public SecretKey mergeKey() {
-        try {
-            char[] prev = new String(sendDigest.digest()).toCharArray();
-            KeySpec specs = new PBEKeySpec(prev, salt, 1024, 256);
-            byte[] s = sendRatchet.generateSecret(specs).getEncoded();
-            sendDigest.update(s);
-            SecretKey key = new SecretKeySpec(s, "AES");
-            return key;
-        } catch (Exception e) {
-            return null;
         }
     }
     
-    /*
-     * Get next key for receiving
-     */
-    public SecretKey nextReceive() {
-        try {
-            char[] prev = new String(receiveDigest.digest()).toCharArray();
-            KeySpec specs = new PBEKeySpec(prev, salt, 1024, 256);
-            byte[] s = receiveRatchet.generateSecret(specs).getEncoded();
-            receiveDigest.update(s);
-            SecretKey key = new SecretKeySpec(s, "AES");
-            return key;
-        } catch (Exception e) {
-            return null;
+        private void resize() {
+    
         }
+
+    // Insert into next free location or resize
+    public void addUser(int userId) {
+
     }
 
+    // 
+    public void removeUser(int removedUser, int remover) {
+
+    }
 
 }

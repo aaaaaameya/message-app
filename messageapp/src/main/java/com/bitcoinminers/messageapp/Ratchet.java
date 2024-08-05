@@ -2,6 +2,7 @@ package com.bitcoinminers.messageapp;
 
 import java.security.MessageDigest;
 import java.security.spec.KeySpec;
+import java.security.spec.RSAPrivateKeySpec;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
