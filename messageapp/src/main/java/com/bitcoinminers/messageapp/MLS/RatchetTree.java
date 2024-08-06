@@ -36,7 +36,7 @@ public class RatchetTree {
     }
 
     // Insert into next free location or resize
-    public int addUser(Integer userId) {
+    public void addUser(Integer userId) {
         if (isFree.isEmpty()) resize();
         Integer pos = isFree.iterator().next();
         isFree.remove(pos);
@@ -44,7 +44,6 @@ public class RatchetTree {
         LeafNode newNode = new LeafNode(pos, (InnerNode) tree.get(parentPos(pos)), tree.get(siblingPos(pos)));
         tree.add(pos, newNode);
         newNode.setupNewKey();
-        return pos;
     }
 
     private Integer parentPos(Integer a) {
