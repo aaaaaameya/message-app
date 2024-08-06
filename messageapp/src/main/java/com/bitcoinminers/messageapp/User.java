@@ -53,11 +53,13 @@ public class User implements Saveable {
     private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
 
 
-    private HashMap<Integer, PublicKey> groupChatPublicKeys = new HashMap<>();
-    private HashMap<Integer, PrivateKey> groupChatPrivateKeys = new HashMap<>();
+    private HashMap<Integer, PublicKey> selfGroupChatPublicKeys = new HashMap<>();
+    private HashMap<Integer, PrivateKey> selfGroupChatPrivateKeys = new HashMap<>();
     private HashMap<Integer, SecretKey> groupSecrets = new HashMap<>();
-    private HashMap<Integer, SecretKey> groupSelfKeys = new HashMap<>();
-    private ArrayList<HashMap<Integer, SecretKey>> groupOtherUserKeys = new ArrayList<>();
+    private HashMap<Integer, SecretKey> selfGroupSenderKeys = new HashMap<>();
+
+    // chat id -> user id to get the AES key of other user in that chat 
+    private HashMap<Integer, HashMap<Integer, SecretKey>> membersGroupSenderKeys = new HashMap<>();
 
 
 
@@ -105,16 +107,27 @@ public class User implements Saveable {
         chats.add(chat.getId());
 
         try {
+            
+            //generate RSA pair
+            KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
+            selfGroupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
+            selfGroupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
+            SecretKey secret = generateGroupSecret(chat);
+            computeMemberSenderKeys(chat, secret);
+            
+        } catch (Exception e) {
+            System.out.printf("Shouldn't get here: %s\n", e.getMessage());
+        }
+    }
+
+    public SecretKey generateGroupSecret(Chat chat) {
+        
+        try {
             //generate new secret
             SecretKey groupSecret = EncryptionHelpers.generateAESKey();
             groupSecrets.put(Integer.valueOf(chat.getId()), groupSecret);
 
-            //generate RSA pair
-            KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
-            groupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
-            groupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
-
-            // broadcast new to each member of the chat encrypting it with their secret key
+            // send new secret to each member of the chat encrypting it with their public key
 
             HashMap<Integer, PublicKey> groupsPks =  chat.getUserPublicKeys();
 
@@ -124,7 +137,23 @@ public class User implements Saveable {
                 byte[] encryptedSecret =  EncryptionHelpers.RSAEncryptSK(pk, groupSecret);
                 server.ping(userId, chat.getId(), encryptedSecret);
             }
-            
+
+            return groupSecret;
+        } catch (Exception e) {
+            System.out.printf("Shouldn't get here: %s\n", e.getMessage());
+            return null;
+        }
+    }
+
+    public void computeMemberSenderKeys(Chat chat, SecretKey secret) {
+        
+        try {
+            HashMap<Integer, SecretKey> groupsSenderKeys =  membersGroupSenderKeys.get(chat.getId());
+
+            for (Integer userId: chat.getUsers()) {
+                SecretKey senderKey = EncryptionHelpers.makeSenderKeyFromSecret(secret, userId);
+                groupsSenderKeys.put(userId, senderKey);
+            }
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
         }
@@ -133,10 +162,10 @@ public class User implements Saveable {
     public void receivePing(Integer chatId, byte[] encryptedNewSecret) throws Exception {
 
         try {
-            PrivateKey privKey = groupChatPrivateKeys.get(chatId);
+            PrivateKey privKey = selfGroupChatPrivateKeys.get(chatId);
             SecretKey newSecret = EncryptionHelpers.RSADecryptSK(privKey, encryptedNewSecret);
             groupSecrets.put(chatId, newSecret);
-            groupSelfKeys.put(chatId, EncryptionHelpers.makeUserKeyFromSecret(newSecret, chatId));
+            selfGroupSenderKeys.put(chatId, EncryptionHelpers.makeSenderKeyFromSecret(newSecret, chatId));
 
         } catch (Exception e) {
             System.err.println(e);
@@ -155,6 +184,7 @@ public class User implements Saveable {
         } catch (NoSuchAlgorithmException e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
         }
+
     }
 
     /*

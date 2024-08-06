@@ -131,7 +131,7 @@ public class EncryptionHelpers {
         return digest.digest(m);
     }
 
-    public static SecretKey makeUserKeyFromSecret(SecretKey secret, Integer userId) throws Exception {
+    public static SecretKey makeSenderKeyFromSecret(SecretKey secret, Integer userId) throws Exception {
         byte[] idBytes = userId.toString().getBytes(StandardCharsets.UTF_8);
         byte[] combined = new byte[secret.getEncoded().length + idBytes.length];
         ByteBuffer buffer = ByteBuffer.wrap(combined);
@@ -146,7 +146,7 @@ public class EncryptionHelpers {
         return newKey;
     }
 
-    public static SecretKey nextUserKey(SecretKey secret) throws Exception {
+    public static SecretKey nextSenderKey(SecretKey secret) throws Exception {
         byte[] hashed = EncryptionHelpers.hash(secret.getEncoded());
         SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
         return newKey;
@@ -184,11 +184,11 @@ public class EncryptionHelpers {
         SecretKey meowmeow = EncryptionHelpers.RSADecryptSK(kp.getPrivate(), enced);
         System.out.println(bytesToHexstring(meowmeow.getEncoded()));
         
-        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 5).getEncoded()));
-        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 5).getEncoded()));
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 5).getEncoded()));
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 5).getEncoded()));
 
-        System.out.println(makeUserKeyFromSecret(meowmeow, 3).getEncoded());
-        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 3).getEncoded()));
+        System.out.println(makeSenderKeyFromSecret(meowmeow, 3).getEncoded());
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 3).getEncoded()));
 
         
         byte[] idk = "meow".getBytes();
