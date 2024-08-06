@@ -5,7 +5,9 @@ import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.swing.undo.StateEdit;
 
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -67,18 +69,65 @@ public class EncryptionHelpers {
         byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
         return new String(plaintext);
     }
-    
-    public static KeyPair getNextPair(KeyPair kp) {
-        return kp;
-    }
-    
-    public static String RSAEncrypt(String pt, PublicKey pk) {
-        return pt;
+
+    public static KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
+        try {
+            KeyPairGenerator generator;
+            generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(2048);
+            return generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println(e);
+            return null;
+        }
     }
 
-    public static String RSADecrypt(String pt, PrivateKey sk) {
-        return pt;
+    public static byte[] RSAEncryptSK(PublicKey publicKey, SecretKey secretMessage) throws Exception {
+   
+        try {
+            final Cipher cipher = Cipher
+            .getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+            cipher.init(Cipher.WRAP_MODE, publicKey);
+            final byte[] wrapped = cipher.wrap(secretMessage);
+
+            return wrapped;
+            // byte[] secretMessageBytes = secretMessage.getBytes(StandardCharsets.UTF_8);
+
+
+            // Cipher encryptCipher = Cipher.getInstance("RSA");
+            // encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            // byte[] encryptedMessageBytes = encryptCipher.doFinal(secretMessageBytes);
+            // return  new String(encryptedMessageBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        }
     }
+
+    public static SecretKey RSADecryptSK(PrivateKey privateKey, byte[] ciphetext) throws Exception {
+        try {
+
+            final Cipher cipher = Cipher
+            .getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            final SecretKey wrapped =  (SecretKey) cipher.unwrap(ciphetext, "AES", Cipher.SECRET_KEY);
+            return wrapped;
+            // Cipher decryptCipher = Cipher.getInstance("RSA");
+            // decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
+            // byte[] encryptedMessageBytes = ciphetext.getBytes(StandardCharsets.UTF_8);
+            // byte[] decryptedMessageBytes = decryptCipher.doFinal(encryptedMessageBytes);
+            // return new String(decryptedMessageBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        }
+    }
+    
+    // public static KeyPair getNextPair(PrivateKey kp) {
+    //     return kp;
+    // }
+
+    
 
 
     // public static KeyPair getRSAPair() throws NoSuchAlgorithmException{
@@ -98,6 +147,16 @@ public class EncryptionHelpers {
      */
     public static void main(String args[]) {
         try {
+        KeyPair kp = EncryptionHelpers.generateRSAKeyPair();
+        SecretKey meow = EncryptionHelpers.generateAESKey();
+        System.out.println(bytesToHexstring(meow.getEncoded()));
+        byte[] enced = EncryptionHelpers.RSAEncryptSK(kp.getPublic(), meow);
+        System.out.println(enced);
+        SecretKey meowmeow = EncryptionHelpers.RSADecryptSK(kp.getPrivate(), enced);
+        System.out.println(bytesToHexstring(meowmeow.getEncoded()));
+
+
+
         /*
          * Alice creates her own DH key pair with 2048-bit key size
          */

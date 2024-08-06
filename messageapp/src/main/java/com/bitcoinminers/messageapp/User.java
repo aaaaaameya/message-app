@@ -11,6 +11,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.X509EncodedKeySpec;
@@ -20,6 +21,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.json.JSONObject;
+import com.bitcoinminers.messageapp.EncryptionHelpers;
 
 /**
  * User of message-app. Simulates an individual device (such as a
@@ -41,7 +43,8 @@ public class User implements Saveable {
      * Group chats user is in
      */
 
-    private int treePosition;
+    private Server server;
+
     
     private ArrayList<Integer> chats = new ArrayList<>();
     private HashMap<Integer, ArrayList<Message>> chatLogs = new HashMap<>();
@@ -49,9 +52,17 @@ public class User implements Saveable {
     private HashMap<Integer, KeyPair> DHKeys = new HashMap<>();
     private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
 
-    public User(int id, String name) {
+
+    private ArrayList<Integer> groupChats = new ArrayList<>();
+    private HashMap<Integer, PublicKey> groupChatPublicKeys = new HashMap<>();
+    private HashMap<Integer, PrivateKey> groupChatPrivateKeys = new HashMap<>();
+    private HashMap<Integer, SecretKey> groupSecrets = new HashMap<>();
+
+
+    public User(int id, String name, Server server) {
         this.id = id;
         this.name = name;
+        this.server = server;
         System.out.printf("User %s created with id %d\n", name, id);
     }
     
@@ -70,6 +81,12 @@ public class User implements Saveable {
         chatLogs.put(chatId, new ArrayList<Message>());
     }
 
+
+    public void addGroupChat(int chatId) {
+        chats.add(chatId);
+        chatLogs.put(chatId, new ArrayList<Message>());
+    }
+
     public void removeChat(int chatId) {
         chats.remove(chatId);
     }
@@ -78,10 +95,51 @@ public class User implements Saveable {
         return this.chats;
     }
 
+
+    public void joinGroupChat(Chat chat) {
+        chats.add(chat.getId());
+
+        try {
+            //generate new secret
+            SecretKey groupSecret = EncryptionHelpers.generateAESKey();
+            groupSecrets.put(Integer.valueOf(chat.getId()), groupSecret);
+
+            //generate RSA pair
+            KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
+            groupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
+            groupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
+
+            // broadcast new to each member of the chat encrypting it with their secret key
+
+            HashMap<Integer, PublicKey> groupsPks =  chat.getUserPublicKeys();
+
+            for (Integer userId: chat.getUsers()) {
+                PublicKey pk = groupsPks.get(userId);
+                // send 
+                byte[] encryptedSecret =  EncryptionHelpers.RSAEncryptSK(pk, groupSecret);
+                server.ping(userId, chat.getId(), encryptedSecret);
+            }
+            
+        } catch (Exception e) {
+            System.out.printf("Shouldn't get here: %s\n", e.getMessage());
+        }
+    }
+
+    public void receivePing(Integer chatId, byte[] encryptedNewSecret) throws Exception{
+
+        try {
+            PrivateKey privKey = groupChatPrivateKeys.get(chatId);
+            SecretKey newSecret = EncryptionHelpers.RSADecryptSK(privKey, encryptedNewSecret);
+            groupSecrets.put(chatId, newSecret);
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+        
+    }
     /*
      * As the first member of the chat, generate a local DH KeyPair for the chat
      */
-    public void initialiseChat(int chatId) {
+    public void initialiseChatttt(int chatId) {
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
             kpg.initialize(2048);

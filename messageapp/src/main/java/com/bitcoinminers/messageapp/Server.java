@@ -55,17 +55,15 @@ public class Server implements Saveable {
             System.err.println("user already in chat");
             return;
         }
-        if (existingUsers.size() != 0) {
-            // Perform DH to get shared secret.
-            User existing = getUser(existingUsers.get(0));
-            // TODO: Implement Basic Station-to-Station for anti MITM unless we wanna keep that as a vulnerability
-            System.out.printf("Adding user %d to chat %d\n", userId, chatId);
-            shareSecret(chatId, existing, user);
-        } else {
-            user.initialiseChat(chatId);
-        }
         user.addChat(chatId);
         chat.addUser(userId);
+        user.joinGroupChat(chat);;
+
+        if (existingUsers.size() == 1) {
+            // Perform DH to get shared secret.
+            chat.makeAdmin(userId);
+        } 
+
     }
 
     private void shareSecret(int chatId, User sender, User receiver) {
@@ -122,11 +120,21 @@ public class Server implements Saveable {
     }
 
     public void newUser(String name) {
-        users.add(new User(getNextId(), name));
+        users.add(new User(getNextId(), name, this));
     }
 
     public void newChat(String name) {
         chats.add(new Chat(getNextId(), name));
+    }
+
+    public void ping(Integer userId,  Integer chatId, byte[] encryptedSecret) throws Exception{
+        try {
+            User user = getUser(userId);
+            user.receivePing(chatId, encryptedSecret);   
+
+        } catch (Exception e) {
+            System.err.println(e);
+        }
     }
 
     /**
@@ -154,4 +162,6 @@ public class Server implements Saveable {
         // TODO Auto-generated method stub
         
     }
+
+
 }

@@ -12,7 +12,7 @@ import org.json.JSONObject;
  * Group messaging chat.
  * @author Christian Albina
  */
-public class Chat implements Saveable {
+public class GroupChat implements Saveable {
 
     /**
      * Unique ID of this chat.
@@ -34,17 +34,14 @@ public class Chat implements Saveable {
      */
     private ArrayList<Integer> users = new ArrayList<>();
 
-
-    private HashMap<Integer, PublicKey> userPublicKeys = new HashMap<>();
-
-
+    private HashMap<Integer, PublicKey> publicKeys = new HashMap<>();
 
     /**
      * Chat admins in the chat.
      */
     private ArrayList<Integer> admins = new ArrayList<>();
 
-    public Chat(int id, String name) {
+    public GroupChat(int id, String name) {
         this.id = id;
         this.name = name;
         System.out.printf("Chat %s created with id %d\n", name, id);
@@ -104,14 +101,4 @@ public class Chat implements Saveable {
         // TODO Auto-generated method stub
         
     }
-
-    public HashMap<Integer, PublicKey> getUserPublicKeys() {
-        return userPublicKeys;
-    }
-
-    public void addUserPublicKeys(Integer userId, PublicKey pk) {
-        userPublicKeys.put(userId, pk);
-    }
-
-    
 }
