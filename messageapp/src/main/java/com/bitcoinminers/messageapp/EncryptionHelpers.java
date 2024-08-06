@@ -1,5 +1,7 @@
 package com.bitcoinminers.messageapp;
 
+
+import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
@@ -7,6 +9,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.swing.undo.StateEdit;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.KeySpec;
@@ -122,6 +125,32 @@ public class EncryptionHelpers {
             return null;
         }
     }
+
+    public static byte[] hash(byte[] m) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(m);
+    }
+
+    public static SecretKey makeUserKeyFromSecret(SecretKey secret, Integer userId) throws Exception {
+        byte[] idBytes = userId.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] combined = new byte[secret.getEncoded().length + idBytes.length];
+        ByteBuffer buffer = ByteBuffer.wrap(combined);
+        buffer.put(secret.getEncoded());
+        buffer.put(idBytes);
+        combined = buffer.array();
+        
+        byte[] hashed = EncryptionHelpers.hash(combined);
+        // System.out.println(bytesToHexstring(hashed));
+
+        SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
+        return newKey;
+    }
+
+    public static SecretKey nextUserKey(SecretKey secret) throws Exception {
+        byte[] hashed = EncryptionHelpers.hash(secret.getEncoded());
+        SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
+        return newKey;
+    }
     
     // public static KeyPair getNextPair(PrivateKey kp) {
     //     return kp;
@@ -154,6 +183,33 @@ public class EncryptionHelpers {
         System.out.println(enced);
         SecretKey meowmeow = EncryptionHelpers.RSADecryptSK(kp.getPrivate(), enced);
         System.out.println(bytesToHexstring(meowmeow.getEncoded()));
+        
+        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 5).getEncoded()));
+        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 5).getEncoded()));
+
+        System.out.println(makeUserKeyFromSecret(meowmeow, 3).getEncoded());
+        System.out.println(bytesToHexstring(makeUserKeyFromSecret(meowmeow, 3).getEncoded()));
+
+        
+        byte[] idk = "meow".getBytes();
+        byte[] buff = new byte[meow.getEncoded().length + idk.length];
+        ByteBuffer buffer = ByteBuffer.wrap(buff);
+        buffer.put(meow.getEncoded());
+        buffer.put(idk);
+        buff = buffer.array();
+        byte[] encodedKey  = meow.getEncoded();
+        
+        byte[] hashed = EncryptionHelpers.hash(buff);
+        System.out.println("hash");
+
+        System.out.println(bytesToHexstring(hashed));
+
+        System.out.println("hash");
+
+
+        SecretKey originalKey = new SecretKeySpec(hashed, 0, encodedKey.length, "AES");
+        System.out.println(bytesToHexstring(originalKey.getEncoded()));
+
 
 
 

@@ -53,10 +53,15 @@ public class User implements Saveable {
     private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
 
 
-    private ArrayList<Integer> groupChats = new ArrayList<>();
     private HashMap<Integer, PublicKey> groupChatPublicKeys = new HashMap<>();
     private HashMap<Integer, PrivateKey> groupChatPrivateKeys = new HashMap<>();
     private HashMap<Integer, SecretKey> groupSecrets = new HashMap<>();
+    private HashMap<Integer, SecretKey> groupSelfKeys = new HashMap<>();
+    private ArrayList<HashMap<Integer, SecretKey>> groupOtherUserKeys = new ArrayList<>();
+
+
+
+    
 
 
     public User(int id, String name, Server server) {
@@ -125,12 +130,14 @@ public class User implements Saveable {
         }
     }
 
-    public void receivePing(Integer chatId, byte[] encryptedNewSecret) throws Exception{
+    public void receivePing(Integer chatId, byte[] encryptedNewSecret) throws Exception {
 
         try {
             PrivateKey privKey = groupChatPrivateKeys.get(chatId);
             SecretKey newSecret = EncryptionHelpers.RSADecryptSK(privKey, encryptedNewSecret);
             groupSecrets.put(chatId, newSecret);
+            groupSelfKeys.put(chatId, EncryptionHelpers.makeUserKeyFromSecret(newSecret, chatId));
+
         } catch (Exception e) {
             System.err.println(e);
         }
@@ -234,6 +241,7 @@ public class User implements Saveable {
 
     public Message decryptMessage(int chatId, Message m) throws GeneralSecurityException {
         String pt = EncryptionHelpers.aesDecrypt(m.getContents(), ratchets.get(chatId).nextReceive(), m.getIv());
+         m.getSender();
         return new Message(m.getSender(), pt, m.getIv());
     }
 
