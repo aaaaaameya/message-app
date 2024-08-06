@@ -20,12 +20,10 @@ public class Experimentation {
 
         byte[] seed = new byte[] { 0x00, 0x00, 0x00, 0x01, 0x02, 0x02, 0x03, 0x04,  0x01, 0x02, 0x03, 0x04,  0x01, 0x02, 0x03, 0x04};
 
-        // Create FixedSecureRandom with the seed
         FixedSecureRandom fs1 = new FixedSecureRandom(seed);
         FixedSecureRandom fs2 = new FixedSecureRandom(seed);
         System.out.println(fs1.getClass());
         
-        // Generate and print random numbers
         System.out.println(fs1.nextInt());
         System.out.println(fs1.nextInt());
         System.out.println(fs2.nextInt());
