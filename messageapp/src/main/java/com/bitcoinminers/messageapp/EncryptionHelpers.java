@@ -67,6 +67,10 @@ public class EncryptionHelpers {
         return new String(plaintext);
     }
 
+    public static KeyPair getNextPair(KeyPair kp) {
+        return kp;
+    }
+
 
     /*
      * Yoinked from oracle
