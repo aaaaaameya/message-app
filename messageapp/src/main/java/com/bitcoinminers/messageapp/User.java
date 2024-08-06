@@ -40,6 +40,9 @@ public class User implements Saveable {
     /**
      * Group chats user is in
      */
+
+    private int treePosition;
+    
     private ArrayList<Integer> chats = new ArrayList<>();
     private HashMap<Integer, ArrayList<Message>> chatLogs = new HashMap<>();
 
@@ -55,6 +58,8 @@ public class User implements Saveable {
     public int getId() {
         return id;
     }
+
+
 
     public String getName() {
         return name;

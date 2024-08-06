@@ -57,6 +57,7 @@ public class EncryptionHelpers {
             return null;
         }
     }
+
     
     public static String aesDecrypt(String ct, SecretKey s, IvParameterSpec iv) throws GeneralSecurityException {
         System.err.println("Decrypting with:");
@@ -66,13 +67,32 @@ public class EncryptionHelpers {
         byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
         return new String(plaintext);
     }
-
+    
     public static KeyPair getNextPair(KeyPair kp) {
         return kp;
     }
+    
+    public static String RSAEncrypt(String pt, PublicKey pk) {
+        return pt;
+    }
 
+    public static String RSADecrypt(String pt, PrivateKey sk) {
+        return pt;
+    }
+
+
+    // public static KeyPair getRSAPair() throws NoSuchAlgorithmException{
+    //     try {
+    //         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+    //         keyPairGenerator.initialize(2048);
+    //         return keyPairGenerator.generateKeyPair();
+    //     } catch (NoSuchAlgorithmException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 
     /*
+
      * Yoinked from oracle
      * Example of using Diffie Hellman
      */
