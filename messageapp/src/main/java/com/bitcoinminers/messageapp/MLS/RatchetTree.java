@@ -30,7 +30,7 @@ public class RatchetTree {
         }
     }
     
-        private void resize() {
+    private void resize() {
     
         }
 
