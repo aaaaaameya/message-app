@@ -50,8 +50,8 @@ public class EncryptionHelpers {
 
     public static String aesEncrypt(String pt, SecretKey s, IvParameterSpec iv) {
         try {
-            System.err.println("Encrypting with:");
-            System.err.println(bytesToHexstring(s.getEncoded()));
+            // System.err.println("Encrypting with:");
+            // System.err.println(bytesToHexstring(s.getEncoded()));
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, s, iv);
             byte[] ciphertext = cipher.doFinal(pt.getBytes());
@@ -65,8 +65,8 @@ public class EncryptionHelpers {
 
     
     public static String aesDecrypt(String ct, SecretKey s, IvParameterSpec iv) throws GeneralSecurityException {
-        System.err.println("Decrypting with:");
-        System.err.println(bytesToHexstring(s.getEncoded()));
+        // System.err.println("Decrypting with:");
+        // System.err.println(bytesToHexstring(s.getEncoded()));
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
         cipher.init(Cipher.DECRYPT_MODE, s, iv);
         byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
@@ -103,17 +103,11 @@ public class EncryptionHelpers {
 
     public static SecretKey RSADecryptSK(PrivateKey privateKey, byte[] ciphetext) throws Exception {
         try {
-
             final Cipher cipher = Cipher
             .getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
             final SecretKey wrapped =  (SecretKey) cipher.unwrap(ciphetext, "AES", Cipher.SECRET_KEY);
             return wrapped;
-            // Cipher decryptCipher = Cipher.getInstance("RSA");
-            // decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
-            // byte[] encryptedMessageBytes = ciphetext.getBytes(StandardCharsets.UTF_8);
-            // byte[] decryptedMessageBytes = decryptCipher.doFinal(encryptedMessageBytes);
-            // return new String(decryptedMessageBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             System.err.println(e);
             return null;
@@ -134,7 +128,6 @@ public class EncryptionHelpers {
         combined = buffer.array();
         
         byte[] hashed = EncryptionHelpers.hash(combined);
-        // System.out.println(bytesToHexstring(hashed));
 
         SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
         return newKey;
@@ -146,22 +139,6 @@ public class EncryptionHelpers {
         return newKey;
     }
     
-    // public static KeyPair getNextPair(PrivateKey kp) {
-    //     return kp;
-    // }
-
-    
-
-
-    // public static KeyPair getRSAPair() throws NoSuchAlgorithmException{
-    //     try {
-    //         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-    //         keyPairGenerator.initialize(2048);
-    //         return keyPairGenerator.generateKeyPair();
-    //     } catch (NoSuchAlgorithmException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
 
     /*
 

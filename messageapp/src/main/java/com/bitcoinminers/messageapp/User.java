@@ -3,7 +3,6 @@ package com.bitcoinminers.messageapp;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -39,9 +38,6 @@ public class User implements Saveable {
     private ArrayList<Integer> chats = new ArrayList<>();
     private HashMap<Integer, TreeMap<Integer, Message>> chatLogs = new HashMap<>();
 
-    // private HashMap<Integer, KeyPair> DHKeys = new HashMap<>();
-    // private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
-
 
     private HashMap<Integer, PublicKey> selfGroupChatPublicKeys = new HashMap<>();
     private HashMap<Integer, PrivateKey> selfGroupChatPrivateKeys = new HashMap<>();
@@ -66,7 +62,7 @@ public class User implements Saveable {
 
     public void addChat(int chatId) {
         chats.add(chatId);
-        chatLogs.put(chatId, new TreeMap<Integer, Message>());
+        if (chatLogs.get(chatId) == null) chatLogs.put(chatId, new TreeMap<Integer, Message>());
     }
 
     public void removeChat(int chatId) {
@@ -84,12 +80,13 @@ public class User implements Saveable {
             KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
             selfGroupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
             selfGroupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
-            HashMap<Integer, Ratchet> keys = new HashMap<>();
-            keys.put(id, null);
-            senderKeys.put(chat.getId(), keys);
+            if (senderKeys.get(chat.getId()) == null) {
+                HashMap<Integer, Ratchet> keys = new HashMap<>();
+                keys.put(id, null);
+                senderKeys.put(chat.getId(), keys);
+            }
             chat.addUserPublicKeys(id, rsaKeys.getPublic());
             generateGroupSecret(chat);
-            // computeSenderKeys(chat, secret);
             
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
@@ -102,18 +99,17 @@ public class User implements Saveable {
             SecretKey groupSecret = EncryptionHelpers.generateAESKey();
 
             // send new secret to each member of the chat encrypting it with their public key
-
             HashMap<Integer, PublicKey> groupsPks =  chat.getUserPublicKeys();
         
             HashMap<Integer, byte[]> broadcast = new HashMap<>();
             for (Integer userId: chat.getUsers()) {
                 PublicKey pk = groupsPks.get(userId);
-                // send 
                 byte[] encryptedSecret =  EncryptionHelpers.RSAEncryptSK(pk, groupSecret);
                 broadcast.put(userId, encryptedSecret);
             }
+            // send
             server.ping(chat.getId(), broadcast);
-
+            System.out.printf("Successfully renewed secret for chat %d\n", chat.getId());
             return groupSecret;
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
@@ -133,7 +129,6 @@ public class User implements Saveable {
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
         }
-        System.err.printf("user %d has computed sender keys for chat %d\n", id, chat.getId());
     }
 
     public void receivePing(Chat chat, byte[] encryptedNewSecret) throws Exception {
@@ -145,7 +140,6 @@ public class User implements Saveable {
             System.err.println(e);
         }    
     }
-
 
     public ArrayList<Message> getMessages(int chatId) {
         return new ArrayList<Message>(chatLogs.get(chatId).values());

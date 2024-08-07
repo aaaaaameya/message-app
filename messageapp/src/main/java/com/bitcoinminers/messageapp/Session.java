@@ -153,11 +153,12 @@ public class Session {
             for (Message m : messages) {
                 System.out.print(m.toString());
             }
-        }
-        if (server.getChatUsers(chatId).contains(currUserId)) {
+        } else {
+            if (!server.getChatUsers(chatId).contains(currUserId)) {
+                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", currUserId, chatId);
+            }
             User u = server.getUser(currUserId);
             u.pullMessages(chatId, messages);
-            System.out.println("User stores decrypted messages:");
             ArrayList<Message> userStored = u.getMessages(chatId);
             for (Message m : userStored) {
                 System.out.print(m.toString());
@@ -174,7 +175,7 @@ public class Session {
     }
     
     private void removeCommand(int userId, int chatId) {
-        server.removeUserFromChat(userId, chatId);
+        server.removeUserFromChat(currUserId, userId, chatId);
     }
     
     private void saveCommand() {

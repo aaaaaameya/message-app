@@ -77,6 +77,7 @@ public class Chat implements Saveable {
     
     public void removeUser(Integer userId) {
         users.remove(userId);
+        userPublicKeys.remove(userId);
     }
 
     public boolean getAdminStatus(Integer userId) {

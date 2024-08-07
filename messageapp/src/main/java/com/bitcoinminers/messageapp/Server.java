@@ -59,17 +59,23 @@ public class Server implements Saveable {
         user.joinGroupChat(chat);;
 
         if (existingUsers.size() == 1) {
-            // Perform DH to get shared secret.
             chat.makeAdmin(userId);
         } 
 
     }
 
-    public void removeUserFromChat(int userId, int chatId) {
+    public void removeUserFromChat(int removerId, int userId, int chatId) {
+        User remover = getUser(removerId);
         getUser(userId);
         Chat chat = getChat(chatId);
-        chat.removeUser(userId);
-
+        if (chat.getUsers().contains(removerId) && chat.getUsers().contains(userId)) {
+            chat.removeUser(userId);
+            System.err.printf("user %d removed from chat %d, new keys will now be computed\n", userId, chatId);
+            remover.generateGroupSecret(chat);
+        } else {
+            System.err.printf("user was not removed");
+        }
+        
     }
 
     public boolean hasUser(int userId) {
