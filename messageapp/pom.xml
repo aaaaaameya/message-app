@@ -28,12 +28,7 @@
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
       <version>20240303</version>
-  </dependency>
-  <dependency>
-    <groupId>org.bouncycastle</groupId>
-    <artifactId>bcpkix-jdk18on</artifactId>
-    <version>1.76</version>
-</dependency>
+    </dependency>
   </dependencies>
 
   <build>
@@ -77,6 +72,15 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version> <!-- or a later version -->
+            <configuration>
+                <source>15</source>
+                <target>15</target>
+            </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
