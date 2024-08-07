@@ -1,9 +1,8 @@
 package com.bitcoinminers.messageapp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
-
-import javax.crypto.spec.IvParameterSpec;
 
 import org.json.JSONObject;
 
@@ -66,12 +65,6 @@ public class Server implements Saveable {
 
     }
 
-    private void shareSecret(int chatId, User sender, User receiver) {
-        byte[] senderPub = sender.initiateDH(chatId);
-        byte[] receiverPub = receiver.acceptDH(chatId, senderPub);
-        sender.completeDH(chatId, receiverPub);
-    }
-
     public void removeUserFromChat(int userId, int chatId) {
         getUser(userId);
         Chat chat = getChat(chatId);
@@ -127,10 +120,11 @@ public class Server implements Saveable {
         chats.add(new Chat(getNextId(), name));
     }
 
-    public void ping(Integer userId,  Integer chatId, byte[] encryptedSecret) throws Exception{
+    public void ping(Integer chatId, HashMap<Integer, byte[]> encryptedSecrets) throws Exception{
         try {
-            User user = getUser(userId);
-            user.receivePing(chatId, encryptedSecret);   
+            for (int u : getChat(chatId).getUsers()) {
+                getUser(u).receivePing(getChat(chatId), encryptedSecrets.get(u));
+            }
 
         } catch (Exception e) {
             System.err.println(e);
@@ -146,9 +140,9 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with id
      * {@code chatId}.
      */
-    public void storeEncryptedMessage(int chatId, Message m) throws NoSuchElementException {
+    public int storeEncryptedMessage(int chatId, Message m) throws NoSuchElementException {
         Chat chat = getChat(chatId);
-        chat.addMessage(m);
+        return chat.addMessage(m);
     }
 
     @Override

@@ -1,27 +1,17 @@
 package com.bitcoinminers.messageapp;
 
 import javax.crypto.*;
-import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 
 import java.security.GeneralSecurityException;
-import java.security.Key;
-import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.json.JSONObject;
-import com.bitcoinminers.messageapp.EncryptionHelpers;
 
 /**
  * User of message-app. Simulates an individual device (such as a
@@ -47,24 +37,17 @@ public class User implements Saveable {
 
     
     private ArrayList<Integer> chats = new ArrayList<>();
-    private HashMap<Integer, ArrayList<Message>> chatLogs = new HashMap<>();
+    private HashMap<Integer, TreeMap<Integer, Message>> chatLogs = new HashMap<>();
 
-    private HashMap<Integer, KeyPair> DHKeys = new HashMap<>();
-    private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
+    // private HashMap<Integer, KeyPair> DHKeys = new HashMap<>();
+    // private HashMap<Integer, Ratchet> ratchets = new HashMap<>();
 
 
     private HashMap<Integer, PublicKey> selfGroupChatPublicKeys = new HashMap<>();
     private HashMap<Integer, PrivateKey> selfGroupChatPrivateKeys = new HashMap<>();
-    private HashMap<Integer, SecretKey> groupSecrets = new HashMap<>();
-    private HashMap<Integer, SecretKey> selfGroupSenderKeys = new HashMap<>();
 
     // chat id -> user id to get the AES key of other user in that chat 
-    private HashMap<Integer, HashMap<Integer, SecretKey>> membersGroupSenderKeys = new HashMap<>();
-
-
-
-    
-
+    private HashMap<Integer, HashMap<Integer, Ratchet>> senderKeys = new HashMap<>();
 
     public User(int id, String name, Server server) {
         this.id = id;
@@ -77,21 +60,13 @@ public class User implements Saveable {
         return id;
     }
 
-
-
     public String getName() {
         return name;
     }
 
     public void addChat(int chatId) {
         chats.add(chatId);
-        chatLogs.put(chatId, new ArrayList<Message>());
-    }
-
-
-    public void addGroupChat(int chatId) {
-        chats.add(chatId);
-        chatLogs.put(chatId, new ArrayList<Message>());
+        chatLogs.put(chatId, new TreeMap<Integer, Message>());
     }
 
     public void removeChat(int chatId) {
@@ -102,18 +77,19 @@ public class User implements Saveable {
         return this.chats;
     }
 
-
     public void joinGroupChat(Chat chat) {
         chats.add(chat.getId());
-
         try {
-            
             //generate RSA pair
             KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
             selfGroupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
             selfGroupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
-            SecretKey secret = generateGroupSecret(chat);
-            computeMemberSenderKeys(chat, secret);
+            HashMap<Integer, Ratchet> keys = new HashMap<>();
+            keys.put(id, null);
+            senderKeys.put(chat.getId(), keys);
+            chat.addUserPublicKeys(id, rsaKeys.getPublic());
+            generateGroupSecret(chat);
+            // computeSenderKeys(chat, secret);
             
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
@@ -121,22 +97,22 @@ public class User implements Saveable {
     }
 
     public SecretKey generateGroupSecret(Chat chat) {
-        
         try {
             //generate new secret
             SecretKey groupSecret = EncryptionHelpers.generateAESKey();
-            groupSecrets.put(Integer.valueOf(chat.getId()), groupSecret);
 
             // send new secret to each member of the chat encrypting it with their public key
 
             HashMap<Integer, PublicKey> groupsPks =  chat.getUserPublicKeys();
-
+        
+            HashMap<Integer, byte[]> broadcast = new HashMap<>();
             for (Integer userId: chat.getUsers()) {
                 PublicKey pk = groupsPks.get(userId);
                 // send 
                 byte[] encryptedSecret =  EncryptionHelpers.RSAEncryptSK(pk, groupSecret);
-                server.ping(userId, chat.getId(), encryptedSecret);
+                broadcast.put(userId, encryptedSecret);
             }
+            server.ping(chat.getId(), broadcast);
 
             return groupSecret;
         } catch (Exception e) {
@@ -145,103 +121,34 @@ public class User implements Saveable {
         }
     }
 
-    public void computeMemberSenderKeys(Chat chat, SecretKey secret) {
-        
+    public void computeSenderKeys(Chat chat, SecretKey secret) { 
+        pullMessages(chat.getId(), chat.getMessages());
         try {
-            HashMap<Integer, SecretKey> groupsSenderKeys =  membersGroupSenderKeys.get(chat.getId());
+            HashMap<Integer, Ratchet> groupsSenderKeys = senderKeys.get(chat.getId());
 
             for (Integer userId: chat.getUsers()) {
-                SecretKey senderKey = EncryptionHelpers.makeSenderKeyFromSecret(secret, userId);
-                groupsSenderKeys.put(userId, senderKey);
+                Ratchet r = new Ratchet(secret.getEncoded(), userId);
+                groupsSenderKeys.put(userId, r);
             }
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
         }
+        System.err.printf("user %d has computed sender keys for chat %d\n", id, chat.getId());
     }
 
-    public void receivePing(Integer chatId, byte[] encryptedNewSecret) throws Exception {
-
+    public void receivePing(Chat chat, byte[] encryptedNewSecret) throws Exception {
         try {
-            PrivateKey privKey = selfGroupChatPrivateKeys.get(chatId);
+            PrivateKey privKey = selfGroupChatPrivateKeys.get(chat.getId());
             SecretKey newSecret = EncryptionHelpers.RSADecryptSK(privKey, encryptedNewSecret);
-            groupSecrets.put(chatId, newSecret);
-            selfGroupSenderKeys.put(chatId, EncryptionHelpers.makeSenderKeyFromSecret(newSecret, chatId));
-
+            computeSenderKeys(chat, newSecret);
         } catch (Exception e) {
             System.err.println(e);
-        }
-        
-    }
-    /*
-     * As the first member of the chat, generate a local DH KeyPair for the chat
-     */
-    public void initialiseChatttt(int chatId) {
-        try {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
-            kpg.initialize(2048);
-            DHKeys.put(chatId, kpg.generateKeyPair());
-            System.out.printf("%d has generated a new key for chat %d\n", id, chatId);
-        } catch (NoSuchAlgorithmException e) {
-            System.out.printf("Shouldn't get here: %s\n", e.getMessage());
-        }
-
+        }    
     }
 
-    /*
-     * Phase 1 of a DH Exchange, public parameters and public key is shared
-     */
-
-    public byte[] initiateDH(int chatId) {
-        return DHKeys.get(chatId).getPublic().getEncoded();
-    }
-
-    /*
-     * Phase 2 of a DH Exchange performed by the receiver
-     * Receives public params, calculates secret and returns its own public key
-     */
-    public byte[] acceptDH(int chatId, byte[] encodedPubKey) {
-        try {
-            PublicKey incomingPubKey = EncryptionHelpers.decodePublicKey(encodedPubKey);
-            DHParameterSpec params = ((DHPublicKey)incomingPubKey).getParams();
-
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
-            kpg.initialize(params);
-            KeyPair kp = kpg.genKeyPair();
-            DHKeys.put(chatId, kp);
-
-            KeyAgreement ka = KeyAgreement.getInstance("DH");
-            ka.init(kp.getPrivate());
-            ka.doPhase(incomingPubKey, true);
-            byte[] sharedSecret = ka.generateSecret();
-            ratchets.put(chatId, new Ratchet(sharedSecret, false));
-            
-            return kp.getPublic().getEncoded();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    /*
-     * Stage 3 of DH Exchange, performed by the sender
-     * Receives public key from sender, calculates secret
-     */
-    public void completeDH(int chatId, byte[] encodedPubKey) {
-        try {
-            PublicKey incomingPubKey = EncryptionHelpers.decodePublicKey(encodedPubKey);
-            
-            KeyPair kp = DHKeys.get(chatId);
-            KeyAgreement ka = KeyAgreement.getInstance("DH");
-            ka.init(kp.getPrivate());
-            ka.doPhase(incomingPubKey, true);
-            byte[] sharedSecret = ka.generateSecret();
-            ratchets.put(chatId, new Ratchet(sharedSecret, true));
-        } catch (Exception e) {
-            // should not get here
-        }
-    }
 
     public ArrayList<Message> getMessages(int chatId) {
-        return chatLogs.get(chatId);
+        return new ArrayList<Message>(chatLogs.get(chatId).values());
     }
 
     /*
@@ -252,27 +159,33 @@ public class User implements Saveable {
      * ratchet is up to date.
      */
     public void pullMessages(int chatId, ArrayList<Message> messages) {
-        try {
-            for (int i = chatLogs.get(chatId).size(); i < messages.size(); i++) {
-                chatLogs.get(chatId).add(decryptMessage(chatId, messages.get(i)));
+        TreeMap<Integer, Message> logs = chatLogs.get(chatId);
+        for (int i = 0; i < messages.size(); i++) {
+            if (!logs.containsKey(i)) {    
+                chatLogs.get(chatId).put(i, decryptMessage(chatId, messages.get(i)));
             }
-        } catch (GeneralSecurityException e) {
-            System.err.println("Failed to decrypt messages");
         }
     }
 
     public void encryptMessage(int chatId, String rawMessage, Server server) {
         IvParameterSpec iv = EncryptionHelpers.generateIv();
-        String ct = EncryptionHelpers.aesEncrypt(rawMessage, ratchets.get(chatId).nextSend(), iv);
-        Message m = new Message(name, ct, iv);
-        server.storeEncryptedMessage(chatId, m);
-        chatLogs.get(chatId).add(new Message(name, rawMessage, iv));
+        Ratchet selfRatchet = senderKeys.get(chatId).get(id);
+        String ct = EncryptionHelpers.aesEncrypt(rawMessage, selfRatchet.nextKey(), iv);
+        Message m = new Message(id, name, ct, iv);
+        int messageNum = server.storeEncryptedMessage(chatId, m);
+        chatLogs.get(chatId).put(messageNum, new Message(id, name, rawMessage, iv));
     }
-
-    public Message decryptMessage(int chatId, Message m) throws GeneralSecurityException {
-        String pt = EncryptionHelpers.aesDecrypt(m.getContents(), ratchets.get(chatId).nextReceive(), m.getIv());
-         m.getSender();
-        return new Message(m.getSender(), pt, m.getIv());
+    
+    public Message decryptMessage(int chatId, Message m) {
+        try {
+            Ratchet senderRatchet = senderKeys.get(chatId).get(m.getSenderId());
+            String pt = EncryptionHelpers.aesDecrypt(m.getContents(), senderRatchet.nextKey(), m.getIv());
+            m.getSender();
+            return new Message(m.getSenderId(), m.getSender(), pt, m.getIv());
+        } catch (Exception e) {
+            // System.err.printf("Failed to decrypt message from %d. Storing encrypted message instead.\n", m.getSenderId());
+            return m;
+        }
     }
 
     @Override

@@ -9,6 +9,12 @@ import org.json.JSONObject;
  * @author Christian Albina
  */
 public class Message implements Saveable {
+
+    /**
+     * Id of sender
+     */
+    private int senderId;
+
     /**
      * Name of the sender of the message.
      */
@@ -24,10 +30,15 @@ public class Message implements Saveable {
      */
     private IvParameterSpec iv;
 
-    public Message(String sender, String contents, IvParameterSpec iv) {
+    public Message(int senderId, String sender, String contents, IvParameterSpec iv) {
+        this.senderId = senderId;        
         this.sender = sender;
         this.contents = contents;
         this.iv = iv;
+    }
+
+    public int getSenderId() {
+        return senderId;
     }
 
     public String getSender() {

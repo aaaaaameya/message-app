@@ -66,8 +66,9 @@ public class Chat implements Saveable {
         return users;
     }
 
-    public void addMessage(Message m) {
+    public int addMessage(Message m) {
         messages.add(m);
+        return messages.size() - 1;
     }
 
     public void addUser(Integer userId) {

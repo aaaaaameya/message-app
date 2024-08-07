@@ -89,20 +89,14 @@ public class EncryptionHelpers {
    
         try {
             final Cipher cipher = Cipher
-            .getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+            .getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.WRAP_MODE, publicKey);
             final byte[] wrapped = cipher.wrap(secretMessage);
 
             return wrapped;
-            // byte[] secretMessageBytes = secretMessage.getBytes(StandardCharsets.UTF_8);
-
-
-            // Cipher encryptCipher = Cipher.getInstance("RSA");
-            // encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            // byte[] encryptedMessageBytes = encryptCipher.doFinal(secretMessageBytes);
-            // return  new String(encryptedMessageBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             System.err.println(e);
+            System.err.println("RSA encrypt failed");
             return null;
         }
     }
@@ -111,7 +105,7 @@ public class EncryptionHelpers {
         try {
 
             final Cipher cipher = Cipher
-            .getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+            .getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
             final SecretKey wrapped =  (SecretKey) cipher.unwrap(ciphetext, "AES", Cipher.SECRET_KEY);
             return wrapped;
