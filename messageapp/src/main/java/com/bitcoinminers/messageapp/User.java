@@ -82,28 +82,24 @@ public class User implements Saveable {
     public void joinGroupChat(Chat chat) {
         chats.add(chat.getId());
         try {
-            //generate RSA pair
-            KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
-            selfGroupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
-            selfGroupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
+            generateKeyPair(chat);
             if (senderKeys.get(chat.getId()) == null) {
                 HashMap<Integer, Ratchet> keys = new HashMap<>();
                 keys.put(id, null);
                 senderKeys.put(chat.getId(), keys);
             }
-            chat.addUserPublicKeys(id, rsaKeys.getPublic());
             generateGroupSecret(chat);
             
         } catch (Exception e) {
             System.out.printf("Shouldn't get here: %s\n", e.getMessage());
         }
     }
-
+    
     public SecretKey generateGroupSecret(Chat chat) {
         try {
             //generate new secret
             SecretKey groupSecret = EncryptionHelpers.generateAESKey();
-
+            
             // send new secret to each member of the chat encrypting it with their public key
             HashMap<Integer, PublicKey> groupsPks =  chat.getUserPublicKeys();
         
@@ -188,6 +184,26 @@ public class User implements Saveable {
         } catch (Exception e) {
             // System.err.printf("Failed to decrypt message from %d. Storing encrypted message instead.\n", m.getSenderId());
             return m;
+        }
+    }
+
+    private void generateKeyPair(Chat chat) {
+        try {
+            //generate RSA pair
+            KeyPair rsaKeys = EncryptionHelpers.generateRSAKeyPair();
+            selfGroupChatPrivateKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPrivate());
+            selfGroupChatPublicKeys.put(Integer.valueOf(chat.getId()), rsaKeys.getPublic());
+            chat.addUserPublicKeys(id, rsaKeys.getPublic());
+        } catch (Exception e) {
+            return;
+        }
+    }
+
+    public void stopCompromise() {
+        for (int chatId : chats) {
+            Chat chat = server.getChat(chatId);
+            generateKeyPair(chat);
+            generateGroupSecret(chat);
         }
     }
 

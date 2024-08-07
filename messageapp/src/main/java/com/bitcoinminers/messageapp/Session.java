@@ -70,7 +70,7 @@ public class Session {
                 case "lu": case "log-u" :    logUsersCommand(Integer.parseInt(commands[1])); break;
                 case "lm": case "log-m" :    logMessagesCommand(Integer.parseInt(commands[1])); break;
                 case "nc": case "new-chat":  newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
-                case "d":  case "delete":    deleteCommand(Integer.parseInt(commands[1])); break;
+                // case "d":  case "delete":    deleteCommand(Integer.parseInt(commands[1])); break;
                 case "a":  case "add":       addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "r":  case "remove":    removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "s":  case "save":      saveCommand(); break;
@@ -90,7 +90,7 @@ public class Session {
         System.out.println("  u(user):          Show all user IDs and names.");
         System.out.println("  c(chats):         Show all chat IDs and names.");
         System.out.println("  nu(new-user) N:   Create new user device with name N.");
-        System.out.println("  sv(sudo-view)     Switch to sudo view.");
+        System.out.println("  sv(server-view)   Switch to server view.");
         System.out.println("  v(view) X:        Switch to user device with ID X.");
         System.out.println("  s(save):          Save the current system state.");
         System.out.println();
@@ -100,7 +100,7 @@ public class Session {
         System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X. User does not need to be in the chat.");
         System.out.println("                    In that case the user only sees messages that they have already decrypted.");
         System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
-        System.out.println("  d(delete) X:      Try to delete chat with ID X.");
+        // System.out.println("  d(delete) X:      Try to delete chat with ID X.");
         System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
         System.out.println("  r(remove) X1 X2:  Try to remove user with ID X1 from chat with ID X2.");
     }
@@ -136,7 +136,7 @@ public class Session {
     public void messageCommand(int chatId, String contents) {
         if (server.getChatUsers(chatId).contains(getCurrUserId())) {
             User u = server.getUser(getCurrUserId());
-            u.pullMessages(chatId, server.getMessages(chatId, getCurrUserId()));
+            u.pullMessages(chatId, server.getMessages(chatId));
             u.encryptMessage(chatId, contents, server);
         } else {
             System.out.printf("User %d not in chat %d\n", currUserId, chatId);
@@ -150,7 +150,7 @@ public class Session {
     }
 
     public void logMessagesCommand(int chatId) {
-        ArrayList<Message> messages = server.getMessages(chatId, getCurrUserId());
+        ArrayList<Message> messages = server.getMessages(chatId);
         if (isSudo()) {
             System.out.println("Server can only see encrypted messages:");
             for (Message m : messages) {
@@ -158,7 +158,7 @@ public class Session {
             }
         } else {
             if (!server.getChatUsers(chatId).contains(getCurrUserId())) {
-                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", currUserId, chatId);
+                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", getCurrUserId(), chatId);
             }
             User u = server.getUser(getCurrUserId());
             u.pullMessages(chatId, messages);

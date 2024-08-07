@@ -9,13 +9,15 @@
 
 ## Description
 Group chat app with end-to-end encryption using MLS (Messaging-Layer Security) Protocol.
-
-## Functionality (TODO):
-- sending encrypted instant messages in a group chat
-- viewing messages with minimal delay, and viewing chat history
-- adding and removing members from the group chat
-- (forward security) new users/unauthorised attackers can’t see previous messages
-- (post-compromise security) removed users/unauthorised attackers can’t see new messages
+Simulates group chats on a single device using Sender Key protocol.
+Users can:
+- send encrypted instant messages in a group chat
+- view messages with minimal delay, and log chat history
+- add and remove members from the group chat
+- reset private and public keys in case of compromise
+The chat system has the following features:
+Forward Security: new users/unauthorised attackers can’t see previous messages in a chat
+Post-Compromise Security: users/unauthorised attackers can’t see new messages, even if a key is found.
 
 ## Sudo/Server View
 
@@ -43,7 +45,6 @@ Outcome|Command
 Try to send message `M` to chat with id `X`.|`m(message) X M`
 Request the chat log of the group chat with ID `X`.|`l(log) X`
 Create a new chat with name `N`.|`nc(new-chat) N`
-Try to delete chat with ID `X`.|`d(delete) X`
 Try to add user with ID `X1` to chat with ID `X2`.|`a(add) X1 X2`
 Try to remove user with ID `X1` from chat with ID `X2`.|`r(remove) X1 X2`
 
