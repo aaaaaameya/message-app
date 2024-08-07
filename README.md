@@ -3,6 +3,8 @@
 ## Contributors
 - aaaaaameya
 - ErinMulkey
+- happyicy
+- Allynixtor
 - TiniWish
 
 ## Description
