@@ -193,7 +193,7 @@ public class Session {
             System.out.print(CommandLineColours.ANSI_GREEN);
 
             if (session.isSudo()) {
-                System.out.print("SERVER");
+                System.out.print("sudo");
             } else {
                 System.out.print(session.getCurrUserId());
             }
