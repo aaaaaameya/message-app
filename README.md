@@ -15,8 +15,11 @@ Users can:
 - view messages with minimal delay, and log chat history
 - add and remove members from the group chat
 - reset private and public keys in case of compromise
+
 The chat system has the following features:
+
 Forward Security: new users/unauthorised attackers can’t see previous messages in a chat
+
 Post-Compromise Security: users/unauthorised attackers can’t see new messages, even if a key is found.
 
 ## Sudo/Server View
