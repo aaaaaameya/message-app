@@ -158,7 +158,7 @@ public class Session {
             }
         } else {
             if (!server.getChatUsers(chatId).contains(getCurrUserId())) {
-                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", currUserId, chatId);
+                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", getCurrUserId(), chatId);
             }
             User u = server.getUser(getCurrUserId());
             u.pullMessages(chatId, messages);
