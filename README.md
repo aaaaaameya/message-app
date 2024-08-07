@@ -14,7 +14,7 @@ Group chat app with end-to-end encryption using MLS (Messaging-Layer Security) P
 - (forward security) new users/unauthorised attackers can’t see previous messages
 - (post-compromise security) removed users/unauthorised attackers can’t see new messages
 
-## Sudo View
+## Sudo/Server View
 
 To simulate users, servers and devices, a 'sudo view' is how one will interact with the message app system.
 
@@ -27,6 +27,7 @@ Quit session.|`q(quit)`
 Show all user IDs and names.|`u(user)`
 Show all chat IDs and names.|`c(chats)`
 Create new user device with name `N`.|`nu(new-user) N`
+Switch to sudo view.|`sv(server-view)`
 Switch to user device with ID `X`.|`v(view) X`
 Save the current system state.|`s(save)`
 

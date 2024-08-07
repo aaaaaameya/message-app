@@ -1,9 +1,9 @@
 package com.bitcoinminers.messageapp;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Scanner;
 
 import com.bitcoinminers.messageapp.exceptions.UnimplementedCommandException;
@@ -22,7 +22,7 @@ public class Session {
     /**
      * ID of the current user view.
      */
-    private int currUserId = -1;
+    private Optional<Integer> currUserId = Optional.empty();
 
     /**
      * Server this session is happening in.
@@ -42,19 +42,14 @@ public class Session {
      * @throws NoSuchElementException If no user is currently being used.
      */
     private int getCurrUserId() throws NoSuchElementException {
-        // return currUserId.get();
-        return currUserId;
+        return currUserId.get();
     }
 
-    private String getCurrUserName() throws NoSuchElementException {
- 
-        for (User user : server.getUsers()) {
-            if (user.getId() == currUserId) {
-                return user.getName();
-            }
-        }
-
-        throw new NoSuchElementException();
+    /**
+     * @return Whether the current session is in sudo mode.
+     */
+    private boolean isSudo() {
+        return currUserId.isEmpty();
     }
 
     public void handleCommand(String command) {
@@ -62,20 +57,21 @@ public class Session {
 
         try {
             switch (commands[0]) {
-                case "h":  case "help":     helpCommand(); break;
-                case "q":  case "quit":     quitCommand(); break;
-                case "u":  case "users":    usersCommand(); break;
-                case "c":  case "chats":    chatsCommand(); break;
-                case "nu": case "new-user": newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
-                case "v":  case "view":     switchViewCommand(Integer.parseInt(commands[1])); break;
-                case "m":  case "message":  messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
-                case "lu":  case "log-u" :     logUsersCommand(Integer.parseInt(commands[1])); break;
-                case "lm":  case "log-m" :     logMessagesCommand(Integer.parseInt(commands[1])); break;
-                case "nc": case "new-chat": newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
-                case "d":  case "delete":   deleteCommand(Integer.parseInt(commands[1])); break;
-                case "a":  case "add":      addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
-                case "r":  case "remove":   removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
-                case "s":  case "save":     saveCommand(); break;
+                case "h":  case "help":      helpCommand(); break;
+                case "q":  case "quit":      quitCommand(); break;
+                case "u":  case "users":     usersCommand(); break;
+                case "c":  case "chats":     chatsCommand(); break;
+                case "nu": case "new-user":  newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
+                case "sv": case "sudo-view": sudoViewCommand(); break;
+                case "v":  case "view":      switchViewCommand(Integer.parseInt(commands[1])); break;
+                case "m":  case "message":   messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
+                case "lu": case "log-u" :    logUsersCommand(Integer.parseInt(commands[1])); break;
+                case "lm": case "log-m" :    logMessagesCommand(Integer.parseInt(commands[1])); break;
+                case "nc": case "new-chat":  newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
+                case "d":  case "delete":    deleteCommand(Integer.parseInt(commands[1])); break;
+                case "a":  case "add":       addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "r":  case "remove":    removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
+                case "s":  case "save":      saveCommand(); break;
                 default: throw new UnknownCommandException(commands[0]);
             }
         } catch (Exception exception) {
@@ -92,6 +88,7 @@ public class Session {
         System.out.println("  u(user):          Show all user IDs and names.");
         System.out.println("  c(chats):         Show all chat IDs and names.");
         System.out.println("  nu(new-user) N:   Create new user device with name N.");
+        System.out.println("  sv(sudo-view)     Switch to sudo view.");
         System.out.println("  v(view) X:        Switch to user device with ID X.");
         System.out.println("  s(save):          Save the current system state.");
         System.out.println();
@@ -125,15 +122,18 @@ public class Session {
         server.newChat(name);
     }
 
+    public void sudoViewCommand() {
+        currUserId = Optional.empty();
+    }
+
     public void switchViewCommand(int userId) {
-        // currUserId = Optional.of(userId);
-        if (server.hasUser(userId) || userId == -1) currUserId = userId;
+        if (server.hasUser(userId)) currUserId = Optional.of(userId);
     }
 
     public void messageCommand(int chatId, String contents) {
-        if (server.getChatUsers(chatId).contains(currUserId)) {
-            User u = server.getUser(currUserId);
-            u.pullMessages(chatId, server.getMessages(chatId, currUserId));
+        if (server.getChatUsers(chatId).contains(getCurrUserId())) {
+            User u = server.getUser(getCurrUserId());
+            u.pullMessages(chatId, server.getMessages(chatId, getCurrUserId()));
             u.encryptMessage(chatId, contents, server);
         } else {
             System.out.printf("User %d not in chat %d\n", currUserId, chatId);
@@ -147,15 +147,15 @@ public class Session {
     }
 
     public void logMessagesCommand(int chatId) {
-        ArrayList<Message> messages = server.getMessages(chatId, currUserId);
-        if (currUserId == -1) {
+        ArrayList<Message> messages = server.getMessages(chatId, getCurrUserId());
+        if (isSudo()) {
             System.out.println("Server can only see encrypted messages:");
             for (Message m : messages) {
                 System.out.print(m.toString());
             }
         }
-        if (server.getChatUsers(chatId).contains(currUserId)) {
-            User u = server.getUser(currUserId);
+        if (server.getChatUsers(chatId).contains(getCurrUserId())) {
+            User u = server.getUser(getCurrUserId());
             u.pullMessages(chatId, messages);
             System.out.println("User stores decrypted messages:");
             ArrayList<Message> userStored = u.getMessages(chatId);
@@ -192,7 +192,7 @@ public class Session {
         while (session.isActive()) {
             System.out.print(CommandLineColours.ANSI_GREEN);
 
-            if (session.getCurrUserId() == -1) {
+            if (session.isSudo()) {
                 System.out.print("SERVER");
             } else {
                 System.out.print(session.getCurrUserId());
