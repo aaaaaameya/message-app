@@ -227,7 +227,7 @@ public class Session {
         sc.close();
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) {
         if (args.length == 0) {
             runFromInput();
         } else {
@@ -237,7 +237,7 @@ public class Session {
             try {
                 runFromFile(file);
             } catch (FileNotFoundException exception) {
-                throw new FileNotFoundException(String.format("There is no file with name \"%s\" to load from", fileName));
+                System.out.printf("There is no file with name \"%s\" to load from.\n", fileName);
             }
         }
     }
