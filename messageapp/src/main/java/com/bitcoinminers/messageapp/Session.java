@@ -96,8 +96,9 @@ public class Session {
         System.out.println();
         System.out.println("user commands");
         System.out.println("  m(message) X M:   Try to send message M to chat with id X.");
-        System.out.println("  lu(log-u) X:      Request the chat log of the group chat with ID X.");
-        System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X.");
+        System.out.println("  lu(log-u) X:      Request the user list of the group chat with ID X.");
+        System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X. User does not need to be in the chat.");
+        System.out.println("                    In that case the user only sees messages that they have already decrypted.");
         System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
         System.out.println("  d(delete) X:      Try to delete chat with ID X.");
         System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
@@ -155,11 +156,12 @@ public class Session {
             for (Message m : messages) {
                 System.out.print(m.toString());
             }
-        }
-        if (server.getChatUsers(chatId).contains(getCurrUserId())) {
+        } else {
+            if (!server.getChatUsers(chatId).contains(getCurrUserId())) {
+                System.out.printf("User %d is not in chat %d, new messages cannot be decrypted\n", currUserId, chatId);
+            }
             User u = server.getUser(getCurrUserId());
             u.pullMessages(chatId, messages);
-            System.out.println("User stores decrypted messages:");
             ArrayList<Message> userStored = u.getMessages(chatId);
             for (Message m : userStored) {
                 System.out.print(m.toString());
@@ -176,7 +178,7 @@ public class Session {
     }
     
     private void removeCommand(int userId, int chatId) {
-        server.removeUserFromChat(userId, chatId);
+        server.removeUserFromChat(getCurrUserId(), userId, chatId);
     }
     
     private void saveCommand() {

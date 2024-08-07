@@ -1,9 +1,8 @@
 package com.bitcoinminers.messageapp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
-
-import javax.crypto.spec.IvParameterSpec;
 
 import org.json.JSONObject;
 
@@ -55,30 +54,28 @@ public class Server implements Saveable {
             System.err.println("user already in chat");
             return;
         }
-        if (existingUsers.size() != 0) {
-            // Perform DH to get shared secret.
-            User existing = getUser(existingUsers.get(0));
-            // TODO: Implement Basic Station-to-Station for anti MITM unless we wanna keep that as a vulnerability
-            System.out.printf("Adding user %d to chat %d\n", userId, chatId);
-            shareSecret(chatId, existing, user);
-        } else {
-            user.initialiseChat(chatId);
-        }
         user.addChat(chatId);
         chat.addUser(userId);
+        user.joinGroupChat(chat);;
+
+        if (existingUsers.size() == 1) {
+            chat.makeAdmin(userId);
+        } 
+
     }
 
-    private void shareSecret(int chatId, User sender, User receiver) {
-        byte[] senderPub = sender.initiateDH(chatId);
-        byte[] receiverPub = receiver.acceptDH(chatId, senderPub);
-        sender.completeDH(chatId, receiverPub);
-    }
-
-    public void removeUserFromChat(int userId, int chatId) {
+    public void removeUserFromChat(int removerId, int userId, int chatId) {
+        User remover = getUser(removerId);
         getUser(userId);
         Chat chat = getChat(chatId);
-        chat.removeUser(userId);
-
+        if (chat.getUsers().contains(removerId) && chat.getUsers().contains(userId)) {
+            chat.removeUser(userId);
+            System.err.printf("user %d removed from chat %d, new keys will now be computed\n", userId, chatId);
+            remover.generateGroupSecret(chat);
+        } else {
+            System.err.printf("user was not removed");
+        }
+        
     }
 
     public boolean hasUser(int userId) {
@@ -122,11 +119,22 @@ public class Server implements Saveable {
     }
 
     public void newUser(String name) {
-        users.add(new User(getNextId(), name));
+        users.add(new User(getNextId(), name, this));
     }
 
     public void newChat(String name) {
         chats.add(new Chat(getNextId(), name));
+    }
+
+    public void ping(Integer chatId, HashMap<Integer, byte[]> encryptedSecrets) throws Exception{
+        try {
+            for (int u : getChat(chatId).getUsers()) {
+                getUser(u).receivePing(getChat(chatId), encryptedSecrets.get(u));
+            }
+
+        } catch (Exception e) {
+            System.err.println(e);
+        }
     }
 
     /**
@@ -138,9 +146,9 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with id
      * {@code chatId}.
      */
-    public void storeEncryptedMessage(int chatId, Message m) throws NoSuchElementException {
+    public int storeEncryptedMessage(int chatId, Message m) throws NoSuchElementException {
         Chat chat = getChat(chatId);
-        chat.addMessage(m);
+        return chat.addMessage(m);
     }
 
     @Override
@@ -154,4 +162,6 @@ public class Server implements Saveable {
         // TODO Auto-generated method stub
         
     }
+
+
 }

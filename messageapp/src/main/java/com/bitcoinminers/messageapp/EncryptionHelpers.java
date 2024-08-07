@@ -1,11 +1,16 @@
 package com.bitcoinminers.messageapp;
 
+
+import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.swing.undo.StateEdit;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -45,8 +50,8 @@ public class EncryptionHelpers {
 
     public static String aesEncrypt(String pt, SecretKey s, IvParameterSpec iv) {
         try {
-            System.err.println("Encrypting with:");
-            System.err.println(bytesToHexstring(s.getEncoded()));
+            // System.err.println("Encrypting with:");
+            // System.err.println(bytesToHexstring(s.getEncoded()));
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, s, iv);
             byte[] ciphertext = cipher.doFinal(pt.getBytes());
@@ -57,23 +62,128 @@ public class EncryptionHelpers {
             return null;
         }
     }
+
     
     public static String aesDecrypt(String ct, SecretKey s, IvParameterSpec iv) throws GeneralSecurityException {
-        System.err.println("Decrypting with:");
-        System.err.println(bytesToHexstring(s.getEncoded()));
+        // System.err.println("Decrypting with:");
+        // System.err.println(bytesToHexstring(s.getEncoded()));
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
         cipher.init(Cipher.DECRYPT_MODE, s, iv);
         byte[] plaintext = cipher.doFinal(Base64.getDecoder().decode(ct));
         return new String(plaintext);
     }
 
+    public static KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
+        try {
+            KeyPairGenerator generator;
+            generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(2048);
+            return generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println(e);
+            return null;
+        }
+    }
+
+    public static byte[] RSAEncryptSK(PublicKey publicKey, SecretKey secretMessage) throws Exception {
+   
+        try {
+            final Cipher cipher = Cipher
+            .getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            cipher.init(Cipher.WRAP_MODE, publicKey);
+            final byte[] wrapped = cipher.wrap(secretMessage);
+
+            return wrapped;
+        } catch (Exception e) {
+            System.err.println(e);
+            System.err.println("RSA encrypt failed");
+            return null;
+        }
+    }
+
+    public static SecretKey RSADecryptSK(PrivateKey privateKey, byte[] ciphetext) throws Exception {
+        try {
+            final Cipher cipher = Cipher
+            .getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            final SecretKey wrapped =  (SecretKey) cipher.unwrap(ciphetext, "AES", Cipher.SECRET_KEY);
+            return wrapped;
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        }
+    }
+
+    public static byte[] hash(byte[] m) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(m);
+    }
+
+    public static SecretKey makeSenderKeyFromSecret(SecretKey secret, Integer userId) throws Exception {
+        byte[] idBytes = userId.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] combined = new byte[secret.getEncoded().length + idBytes.length];
+        ByteBuffer buffer = ByteBuffer.wrap(combined);
+        buffer.put(secret.getEncoded());
+        buffer.put(idBytes);
+        combined = buffer.array();
+        
+        byte[] hashed = EncryptionHelpers.hash(combined);
+
+        SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
+        return newKey;
+    }
+
+    public static SecretKey nextSenderKey(SecretKey secret) throws Exception {
+        byte[] hashed = EncryptionHelpers.hash(secret.getEncoded());
+        SecretKey newKey = new SecretKeySpec(hashed, 0, secret.getEncoded().length, "AES");
+        return newKey;
+    }
+    
 
     /*
+
      * Yoinked from oracle
      * Example of using Diffie Hellman
      */
     public static void main(String args[]) {
         try {
+        KeyPair kp = EncryptionHelpers.generateRSAKeyPair();
+        SecretKey meow = EncryptionHelpers.generateAESKey();
+        System.out.println(bytesToHexstring(meow.getEncoded()));
+        byte[] enced = EncryptionHelpers.RSAEncryptSK(kp.getPublic(), meow);
+        System.out.println(enced);
+        SecretKey meowmeow = EncryptionHelpers.RSADecryptSK(kp.getPrivate(), enced);
+        System.out.println(bytesToHexstring(meowmeow.getEncoded()));
+        
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 5).getEncoded()));
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 5).getEncoded()));
+
+        System.out.println(makeSenderKeyFromSecret(meowmeow, 3).getEncoded());
+        System.out.println(bytesToHexstring(makeSenderKeyFromSecret(meowmeow, 3).getEncoded()));
+
+        
+        byte[] idk = "meow".getBytes();
+        byte[] buff = new byte[meow.getEncoded().length + idk.length];
+        ByteBuffer buffer = ByteBuffer.wrap(buff);
+        buffer.put(meow.getEncoded());
+        buffer.put(idk);
+        buff = buffer.array();
+        byte[] encodedKey  = meow.getEncoded();
+        
+        byte[] hashed = EncryptionHelpers.hash(buff);
+        System.out.println("hash");
+
+        System.out.println(bytesToHexstring(hashed));
+
+        System.out.println("hash");
+
+
+        SecretKey originalKey = new SecretKeySpec(hashed, 0, encodedKey.length, "AES");
+        System.out.println(bytesToHexstring(originalKey.getEncoded()));
+
+
+
+
         /*
          * Alice creates her own DH key pair with 2048-bit key size
          */

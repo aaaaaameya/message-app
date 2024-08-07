@@ -1,6 +1,8 @@
 package com.bitcoinminers.messageapp;
 
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.crypto.spec.IvParameterSpec;
 
@@ -32,6 +34,11 @@ public class Chat implements Saveable {
      */
     private ArrayList<Integer> users = new ArrayList<>();
 
+
+    private HashMap<Integer, PublicKey> userPublicKeys = new HashMap<>();
+
+
+
     /**
      * Chat admins in the chat.
      */
@@ -59,8 +66,9 @@ public class Chat implements Saveable {
         return users;
     }
 
-    public void addMessage(Message m) {
+    public int addMessage(Message m) {
         messages.add(m);
+        return messages.size() - 1;
     }
 
     public void addUser(Integer userId) {
@@ -69,6 +77,7 @@ public class Chat implements Saveable {
     
     public void removeUser(Integer userId) {
         users.remove(userId);
+        userPublicKeys.remove(userId);
     }
 
     public boolean getAdminStatus(Integer userId) {
@@ -97,4 +106,14 @@ public class Chat implements Saveable {
         // TODO Auto-generated method stub
         
     }
+
+    public HashMap<Integer, PublicKey> getUserPublicKeys() {
+        return userPublicKeys;
+    }
+
+    public void addUserPublicKeys(Integer userId, PublicKey pk) {
+        userPublicKeys.put(userId, pk);
+    }
+
+    
 }
