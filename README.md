@@ -3,6 +3,7 @@
 ## Contributors
 - aaaaaameya
 - ErinMulkey
+- TiniWish
 
 ## Description
 Group chat app with end-to-end encryption using MLS (Messaging-Layer Security) Protocol.
