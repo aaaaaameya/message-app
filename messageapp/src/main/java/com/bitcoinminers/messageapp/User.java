@@ -18,6 +18,12 @@ import org.json.JSONObject;
  * @author Christian Albina
  */
 public class User implements Saveable {
+    
+    /*
+     * Number of messages before secret should be reset, including own keypair
+     */
+    private static int RESET_INTERVAL = 3;
+
     /**
      * Unique ID of user.
      */
@@ -162,6 +168,9 @@ public class User implements Saveable {
     }
 
     public void encryptMessage(int chatId, String rawMessage, Server server) {
+        if (chatLogs.get(chatId).size() % RESET_INTERVAL == 0) {   
+            generateGroupSecret(server.getChat(chatId));
+        }
         IvParameterSpec iv = EncryptionHelpers.generateIv();
         Ratchet selfRatchet = senderKeys.get(chatId).get(id);
         String ct = EncryptionHelpers.aesEncrypt(rawMessage, selfRatchet.nextKey(), iv);
