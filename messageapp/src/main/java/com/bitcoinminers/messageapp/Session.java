@@ -1,5 +1,7 @@
 package com.bitcoinminers.messageapp;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -181,12 +183,12 @@ public class Session {
         throw new UnimplementedCommandException("save command");
     }
 
-    public static void main(String[] args) {
-        System.out.println("Starting session...");
-
+    /**
+     * Run a session from command line input. Prints pretty interface.
+     */
+    public static void runFromInput() {
         Session session = new Session(new Server());
         Scanner sc = new Scanner(System.in);
-
         System.out.println("\nType \"help\" to see all commands.");
 
         while (session.isActive()) {
@@ -206,5 +208,37 @@ public class Session {
         }
 
         sc.close();
+    }
+
+    /**
+     * Run a session from the lines of an input file. Only prints
+     * queried information.
+     * @param file File to be read from line-by-line.
+     * @throws FileNotFoundException If `file` cannot be found.
+     */
+    public static void runFromFile(File file) throws FileNotFoundException {
+        Session session = new Session(new Server());
+        Scanner sc = new Scanner(file);
+
+        while (session.isActive() && sc.hasNextLine()) {
+            session.handleCommand(sc.nextLine());
+        }
+
+        sc.close();
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+        if (args.length == 0) {
+            runFromInput();
+        } else {
+            final String fileName = args[0];
+            File file = new File(fileName);
+
+            try {
+                runFromFile(file);
+            } catch (FileNotFoundException exception) {
+                throw new FileNotFoundException(String.format("There is no file with name \"%s\" to load from", fileName));
+            }
+        }
     }
 }
