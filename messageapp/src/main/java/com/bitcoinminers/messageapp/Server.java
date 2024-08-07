@@ -101,7 +101,7 @@ public class Server implements Saveable {
      * @throws NoSuchElementException If there is no chat with  ID
      * {@code chatId}.
      */
-    public ArrayList<Message> getMessages(int chatId, int currUserId) throws NoSuchElementException {
+    public ArrayList<Message> getMessages(int chatId) throws NoSuchElementException {
         Chat chat = getChat(chatId);
         return chat.getMessages();
     }

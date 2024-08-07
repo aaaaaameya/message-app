@@ -90,7 +90,7 @@ public class Session {
         System.out.println("  u(user):          Show all user IDs and names.");
         System.out.println("  c(chats):         Show all chat IDs and names.");
         System.out.println("  nu(new-user) N:   Create new user device with name N.");
-        System.out.println("  sv(sudo-view)     Switch to sudo view.");
+        System.out.println("  sv(server-view)   Switch to server view.");
         System.out.println("  v(view) X:        Switch to user device with ID X.");
         System.out.println("  s(save):          Save the current system state.");
         System.out.println();
@@ -136,7 +136,7 @@ public class Session {
     public void messageCommand(int chatId, String contents) {
         if (server.getChatUsers(chatId).contains(getCurrUserId())) {
             User u = server.getUser(getCurrUserId());
-            u.pullMessages(chatId, server.getMessages(chatId, getCurrUserId()));
+            u.pullMessages(chatId, server.getMessages(chatId));
             u.encryptMessage(chatId, contents, server);
         } else {
             System.out.printf("User %d not in chat %d\n", currUserId, chatId);
@@ -150,7 +150,7 @@ public class Session {
     }
 
     public void logMessagesCommand(int chatId) {
-        ArrayList<Message> messages = server.getMessages(chatId, getCurrUserId());
+        ArrayList<Message> messages = server.getMessages(chatId);
         if (isSudo()) {
             System.out.println("Server can only see encrypted messages:");
             for (Message m : messages) {
