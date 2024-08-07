@@ -45,17 +45,6 @@ public class Session {
         return currUserId;
     }
 
-    private String getCurrUserName() throws NoSuchElementException {
- 
-        for (User user : server.getUsers()) {
-            if (user.getId() == currUserId) {
-                return user.getName();
-            }
-        }
-
-        throw new NoSuchElementException();
-    }
-
     public void handleCommand(String command) {
         String[] commands = command.split("\\s+");
 
