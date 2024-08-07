@@ -70,7 +70,7 @@ public class Session {
                 case "lu": case "log-u" :    logUsersCommand(Integer.parseInt(commands[1])); break;
                 case "lm": case "log-m" :    logMessagesCommand(Integer.parseInt(commands[1])); break;
                 case "nc": case "new-chat":  newChatCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
-                case "d":  case "delete":    deleteCommand(Integer.parseInt(commands[1])); break;
+                // case "d":  case "delete":    deleteCommand(Integer.parseInt(commands[1])); break;
                 case "a":  case "add":       addCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "r":  case "remove":    removeCommand(Integer.parseInt(commands[1]), Integer.parseInt(commands[2])); break;
                 case "s":  case "save":      saveCommand(); break;
@@ -100,7 +100,7 @@ public class Session {
         System.out.println("  lm(log-m) X:      Request the chat log of the group chat with ID X. User does not need to be in the chat.");
         System.out.println("                    In that case the user only sees messages that they have already decrypted.");
         System.out.println("  nc(new-chat) N:   Create a new chat with name N.");
-        System.out.println("  d(delete) X:      Try to delete chat with ID X.");
+        // System.out.println("  d(delete) X:      Try to delete chat with ID X.");
         System.out.println("  a(add) X1 X2:     Try to add user with ID X1 to chat with ID X2.");
         System.out.println("  r(remove) X1 X2:  Try to remove user with ID X1 from chat with ID X2.");
     }
