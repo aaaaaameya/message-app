@@ -127,7 +127,7 @@ public class Session {
 
     public void switchViewCommand(int userId) {
         // currUserId = Optional.of(userId);
-        if (server.hasUser(userId) || userId == -1) currUserId = userId;
+        if (server.hasUser(userId)) currUserId = userId;
     }
 
     public void messageCommand(int chatId, String contents) {
