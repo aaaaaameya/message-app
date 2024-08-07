@@ -62,7 +62,7 @@ public class Session {
                 case "u":  case "users":     usersCommand(); break;
                 case "c":  case "chats":     chatsCommand(); break;
                 case "nu": case "new-user":  newUserCommand(String.join(" ", Arrays.copyOfRange(commands, 1, commands.length))); break;
-                case "sv": case "sudo-view": sudoViewCommand();
+                case "sv": case "sudo-view": sudoViewCommand(); break;
                 case "v":  case "view":      switchViewCommand(Integer.parseInt(commands[1])); break;
                 case "m":  case "message":   messageCommand(Integer.parseInt(commands[1]), String.join(" ", Arrays.copyOfRange(commands, 2, commands.length))); break;
                 case "lu": case "log-u" :    logUsersCommand(Integer.parseInt(commands[1])); break;
